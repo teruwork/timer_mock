@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>積込時間計測モック</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4 text-sm">
+  <div class="max-w-md mx-auto bg-white p-4 rounded-xl shadow">
+    <h1 class="text-lg font-bold mb-4 text-center">トラック積込時間 記録</h1>
+
+    <!-- 入力フォーム -->
+    <div class="mb-4 space-y-2">
+      <input id="carNumber" class="w-full p-2 border rounded" placeholder="車両番号 (例: 静岡800あ12-34)" />
+      <input id="company" class="w-full p-2 border rounded" placeholder="運送会社名" />
+      <input id="tankNumber" class="w-full p-2 border rounded" placeholder="タンクNo. (例: T-3)" />
+      <button onclick="startTimer()" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
+        ▶ スタート
+      </button>
+    </div>
+
+    <!-- 計測中一覧 -->
+    <h2 class="font-semibold mb-2">📋 計測中の車両</h2>
+    <div id="timerList" class="space-y-2">
+      <!-- 動的に追加 -->
+    </div>
+  </div>
+
+  <script>
+    function startTimer() {
+      const carNumber = document.getElementById("carNumber").value;
+      const company = document.getElementById("company").value;
+      const tankNumber = document.getElementById("tankNumber").value;
+
+      if (!carNumber || !company || !tankNumber) {
+        return alert("すべて入力してください");
+      }
+
+      const now = new Date();
+      const dateStr = now.toISOString().split("T")[0]; // YYYY-MM-DD
+
+      const container = document.createElement("div");
+      container.className = "bg-gray-50 border p-2 rounded flex justify-between items-center";
+
+      const label = document.createElement("div");
+      label.innerHTML = `
+        <div class="font-semibold">${carNumber}</div>
+        <div class="text-xs text-gray-600">${company}（${tankNumber}）</div>
+        <div class="text-xs text-gray-400">📅 ${dateStr}</div>
+        <div class="text-sm mt-1">経過: <span class="text-blue-600 font-mono" id="time">00:00</span></div>
+      `;
+
+      const stopBtn = document.createElement("button");
+      stopBtn.className = "bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600";
+      stopBtn.textContent = "終了";
+      stopBtn.onclick = () => container.remove();
+
+      container.appendChild(label);
+      container.appendChild(stopBtn);
+      document.getElementById("timerList").appendChild(container);
+
+      // ストップウォッチ
+      let sec = 0;
+      const timeEl = label.querySelector("#time");
+      const interval = setInterval(() => {
+        sec++;
+        const m = String(Math.floor(sec / 60)).padStart(2, "0");
+        const s = String(sec % 60).padStart(2, "0");
+        timeEl.textContent = `${m}:${s}`;
+      }, 1000);
+
+      // 終了で止める
+      stopBtn.addEventListener("click", () => clearInterval(interval));
+
+      // 初期化
+      document.getElementById("carNumber").value = "";
+      document.getElementById("company").value = "";
+      document.getElementById("tankNumber").value = "";
+    }
+  </script>
+</body>
+</html>
