@@ -10,25 +10,38 @@
   <div class="max-w-md md:max-w-lg lg:max-w-2xl mx-auto bg-white p-4 rounded-xl shadow">
     <h1 class="text-lg font-bold mb-4 text-center">✅ 完了済み記録 一覧</h1>
 
-    <!-- 完了済みリスト（仮データ）-->
+    <!-- 完了済みリスト -->
     <div id="completedList" class="space-y-3 text-gray-700">
-      <div class="bg-green-100 border border-green-300 p-3 rounded">
-        <div class="font-semibold">静岡800あ12-34</div>
-        <div class="text-xs text-gray-600">○○運送（T-3）</div>
-        <div class="text-xs text-gray-400">📅 2025-07-18</div>
-        <div class="text-sm text-green-700">経過時間: 03:24</div>
-      </div>
-      <div class="bg-green-100 border border-green-300 p-3 rounded">
-        <div class="font-semibold">浜松300う56-78</div>
-        <div class="text-xs text-gray-600">△△物流（T-1）</div>
-        <div class="text-xs text-gray-400">📅 2025-07-19</div>
-        <div class="text-sm text-green-700">経過時間: 02:12</div>
-      </div>
+      <!-- localStorageから読み込み表示 -->
     </div>
 
     <div class="text-center mt-6">
       <a href="index.html" class="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">← 記録画面へ戻る</a>
     </div>
   </div>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const list = document.getElementById("completedList");
+      const records = JSON.parse(localStorage.getItem("completedRecords") || "[]");
+
+      if (records.length === 0) {
+        list.innerHTML = '<div class="text-gray-500">完了記録はまだありません。</div>';
+        return;
+      }
+
+      records.forEach(({ carNumber, company, tankNumber, date, duration }) => {
+        const item = document.createElement("div");
+        item.className = "bg-green-100 border border-green-300 p-3 rounded";
+        item.innerHTML = `
+          <div class="font-semibold">${carNumber}</div>
+          <div class="text-xs text-gray-600">${company}（${tankNumber}）</div>
+          <div class="text-xs text-gray-400">📅 ${date}</div>
+          <div class="text-sm text-green-700">経過時間: ${duration}</div>
+        `;
+        list.appendChild(item);
+      });
+    });
+  </script>
 </body>
 </html>
