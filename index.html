@@ -30,7 +30,6 @@
     <div id="timerList" class="space-y-2 mb-6">
       <!-- 動的に追加 -->
     </div>
-
   </div>
 
   <script>
@@ -85,18 +84,6 @@
           duration: timeEl.textContent
         };
 
-        // 表示用HTML
-        const done = document.createElement("div");
-        done.className = "bg-green-100 border border-green-300 p-2 rounded";
-        done.innerHTML = `
-          <div class="font-semibold">${carNumber}</div>
-          <div class="text-xs text-gray-600">${company}（${tankNumber}）</div>
-          <div class="text-xs text-gray-400">📅 ${dateStr}</div>
-          <div class="text-sm text-green-700">経過時間: ${timeEl.textContent}</div>
-        `;
-        document.getElementById("completedList").appendChild(done);
-
-        // localStorageに追加
         const data = JSON.parse(localStorage.getItem("completedRecords") || "[]");
         data.push(record);
         localStorage.setItem("completedRecords", JSON.stringify(data));
