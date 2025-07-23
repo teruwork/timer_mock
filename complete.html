@@ -30,6 +30,9 @@
       <button onclick="exportCSV()" class="inline-flex items-center gap-2 bg-green-500 text-white font-semibold py-2 px-4 rounded-full shadow hover:bg-green-600 transition">
         📄 CSV出力
       </button>
+      <button onclick="copyToClipboard()" class="inline-flex items-center gap-2 bg-yellow-500 text-white font-semibold py-2 px-4 rounded-full shadow hover:bg-yellow-600 transition">
+        📋 クリップボード出力
+      </button>
     </div>
 
     <!-- 一覧テーブル -->
@@ -155,6 +158,20 @@
       link.setAttribute("href", url);
       link.setAttribute("download", "completed_records.csv");
       link.click();
+    }
+
+    function copyToClipboard() {
+      if (!currentFilteredRecords.length) return alert("コピー対象データがありません。");
+      const header = ["日付","車両番号","運送会社","タンクNo.","経過時間","備考"];
+      const rows = currentFilteredRecords.map(r => [
+        r.date, r.carNumber, r.company || '', r.tankNumber || '', r.duration, r.remarks || ''
+      ]);
+      const text = [header, ...rows].map(row => row.join("\t")).join("\n");
+      navigator.clipboard.writeText(text).then(() => {
+        alert("一覧データをクリップボードにコピーしました。");
+      }).catch(err => {
+        alert("コピーに失敗しました：" + err);
+      });
     }
 
     window.onload = () => filterRecords();
