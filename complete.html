@@ -27,6 +27,9 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16l-4-4m0 0l4-4m-4 4h16" /></svg>
         検索する
       </button>
+      <button onclick="exportCSV()" class="inline-flex items-center gap-2 bg-green-500 text-white font-semibold py-2 px-4 rounded-full shadow hover:bg-green-600 transition">
+        📄 CSV出力
+      </button>
     </div>
 
     <!-- 一覧テーブル -->
@@ -57,6 +60,7 @@
   <script>
     let currentSortKey = null;
     let currentSortAsc = true;
+    let currentFilteredRecords = [];
 
     function loadRecords() {
       let records = JSON.parse(localStorage.getItem("completedRecords") || "null");
@@ -72,9 +76,9 @@
     }
 
     function displayRecords(records) {
+      currentFilteredRecords = records;
       const tbody = document.getElementById("recordTable");
       tbody.innerHTML = "";
-
       records.forEach(record => {
         const row = document.createElement("tr");
         row.innerHTML = `
@@ -124,7 +128,6 @@
       return function(a, b) {
         let valA = a[key] || '';
         let valB = b[key] || '';
-
         if (key === 'duration') {
           const toSec = str => {
             const [h, m] = str.split(":").map(Number);
@@ -133,11 +136,25 @@
           valA = toSec(valA);
           valB = toSec(valB);
         }
-
         if (valA < valB) return asc ? -1 : 1;
         if (valA > valB) return asc ? 1 : -1;
         return 0;
       };
+    }
+
+    function exportCSV() {
+      if (!currentFilteredRecords.length) return alert("出力対象データがありません。");
+      const header = ["日付","車両番号","運送会社","タンクNo.","経過時間","備考"];
+      const rows = currentFilteredRecords.map(r => [
+        r.date, r.carNumber, r.company || '', r.tankNumber || '', r.duration, r.remarks || ''
+      ]);
+      const csvContent = [header, ...rows].map(e => e.map(v => `"${v}"`).join(",")).join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "completed_records.csv");
+      link.click();
     }
 
     window.onload = () => filterRecords();
