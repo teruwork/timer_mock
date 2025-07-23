@@ -10,15 +10,20 @@
   <div class="max-w-6xl mx-auto bg-white p-6 rounded-xl shadow space-y-6">
     <h1 class="text-xl font-bold text-center text-blue-800">✅ 完了済み一覧</h1>
 
-    <!-- 検索条件エリア -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-      <input id="searchDate" type="date" class="p-2 border rounded w-full" placeholder="日付で絞り込み" />
-      <input id="searchCar" type="text" class="p-2 border rounded w-full" placeholder="車両番号で検索" />
-      <input id="searchCompany" type="text" class="p-2 border rounded w-full" placeholder="運送会社で検索" />
-      <input id="searchTank" type="text" class="p-2 border rounded w-full" placeholder="タンクNoで検索" />
+    <!-- 検索条件エリア：1段目（日付） -->
+    <div class="flex flex-wrap items-center gap-3 text-sm mb-2">
+      <label for="searchDateFrom" class="font-medium text-gray-700 whitespace-nowrap">📅 日付</label>
+      <input id="searchDateFrom" type="date" class="p-2 border rounded" />
+      <span class="text-gray-500">〜</span>
+      <input id="searchDateTo" type="date" class="p-2 border rounded" />
     </div>
-    <div class="text-right mb-4">
-      <button onclick="filterRecords()" class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-2 px-5 rounded-full shadow hover:from-blue-600 hover:to-blue-700 transition">
+
+    <!-- 検索条件エリア：2段目（その他） -->
+    <div class="flex flex-wrap items-center gap-3 text-sm mb-4">
+      <input id="searchCar" type="text" class="p-2 border rounded" placeholder="車両番号で検索" />
+      <input id="searchCompany" type="text" class="p-2 border rounded" placeholder="運送会社で検索" />
+      <input id="searchTank" type="text" class="p-2 border rounded" placeholder="タンクNoで検索" />
+      <button onclick="filterRecords()" class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-2 px-4 rounded-full shadow hover:from-blue-600 hover:to-blue-700 transition">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16l-4-4m0 0l4-4m-4 4h16" /></svg>
         検索する
       </button>
@@ -85,14 +90,16 @@
     }
 
     function filterRecords() {
-      const date = document.getElementById("searchDate").value;
+      const dateFrom = document.getElementById("searchDateFrom").value;
+      const dateTo = document.getElementById("searchDateTo").value;
       const car = document.getElementById("searchCar").value.trim();
       const company = document.getElementById("searchCompany").value.trim();
       const tank = document.getElementById("searchTank").value.trim();
 
       let records = loadRecords();
       records = records.filter(r => {
-        return (!date || r.date === date)
+        return (!dateFrom || r.date >= dateFrom)
+          && (!dateTo || r.date <= dateTo)
           && (!car || r.carNumber.includes(car))
           && (!company || (r.company || '').includes(company))
           && (!tank || (r.tankNumber || '').includes(tank));
