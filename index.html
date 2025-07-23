@@ -3,32 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>積込時間計測モック</title>
+  <title>積込時間計測モック（大きな文字）</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-4 text-sm">
-  <div class="max-w-md md:max-w-lg lg:max-w-2xl mx-auto bg-white p-4 rounded-xl shadow">
-    <h1 class="text-lg font-bold mb-4 text-center">トラック積込時間 記録</h1>
+<body class="bg-gray-100 p-6 text-base">
+  <div class="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow space-y-6">
+    <h1 class="text-2xl font-bold text-center text-blue-800">トラック積込時間 記録</h1>
 
     <!-- リンクボタン -->
-    <div class="text-right mb-2">
-      <a href="complete.html" class="text-blue-600 underline text-sm">✅ 完了済み一覧を見る</a>
+    <div class="text-right">
+      <a href="complete.html" class="text-blue-600 underline text-lg">✅ 完了済み一覧を見る</a>
     </div>
 
     <!-- 入力フォーム -->
-    <div class="mb-4 space-y-2">
-      <input id="carNumber" class="w-full p-2 border rounded" placeholder="車両番号 (例: 静岡800あ12-34)" />
-      <input id="company" class="w-full p-2 border rounded" placeholder="運送会社名" />
-      <input id="tankNumber" class="w-full p-2 border rounded" placeholder="タンクNo. (例: T-3)" />
-      <button onclick="startTimer()" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
-        ▶ スタート
+    <div class="space-y-4">
+      <input id="carNumber" class="w-full p-4 text-xl border rounded" placeholder="🚚 車両番号 (必須) 例: 静岡800あ12-34" />
+      <input id="company" class="w-full p-4 text-xl border rounded" placeholder="🏢 運送会社名 (任意)" />
+      <input id="tankNumber" class="w-full p-4 text-xl border rounded" placeholder="🛢 タンクNo. (任意) 例: T-3" />
+      <input id="remarks" class="w-full p-4 text-xl border rounded" placeholder="📝 備考 (任意)" />
+      <button onclick="startTimer()" class="w-full bg-blue-600 text-white text-2xl font-semibold py-4 rounded-lg hover:bg-blue-700">
+        ▶ 計測スタート
       </button>
     </div>
 
     <!-- 計測中一覧 -->
-    <h2 class="font-semibold mb-2">📋 計測中の車両</h2>
-    <div id="timerList" class="space-y-2 mb-6">
-      <!-- 動的に追加 -->
+    <div>
+      <h2 class="text-xl font-bold mb-2">📋 現在計測中の車両</h2>
+      <div id="timerList" class="space-y-4">
+        <!-- 動的に追加 -->
+      </div>
     </div>
   </div>
 
@@ -37,27 +40,29 @@
       const carNumber = document.getElementById("carNumber").value;
       const company = document.getElementById("company").value;
       const tankNumber = document.getElementById("tankNumber").value;
-      if (!carNumber || !company || !tankNumber) {
-        return alert("すべて入力してください");
+      const remarks = document.getElementById("remarks").value;
+      if (!carNumber) {
+        return alert("車両番号は必須です");
       }
 
       const now = new Date();
       const dateStr = now.toISOString().split("T")[0];
 
       const container = document.createElement("div");
-      container.className = "bg-gray-50 border p-2 rounded flex justify-between items-center";
+      container.className = "bg-gray-100 border border-blue-200 p-4 rounded-lg flex justify-between items-center";
 
       const label = document.createElement("div");
       label.innerHTML = `
-        <div class="font-semibold">${carNumber}</div>
-        <div class="text-xs text-gray-600">${company}（${tankNumber}）</div>
-        <div class="text-xs text-gray-400">📅 ${dateStr}</div>
-        <div class="text-sm mt-1">経過: <span class="text-blue-600 font-mono" id="time">00:00</span></div>
+        <div class="text-2xl font-bold text-blue-800">${carNumber}</div>
+        ${company || tankNumber ? `<div class="text-lg text-gray-700">${company || ''}${company && tankNumber ? '（' + tankNumber + '）' : tankNumber ? '（' + tankNumber + '）' : ''}</div>` : ''}
+        <div class="text-md text-gray-500">📅 ${dateStr}</div>
+        ${remarks ? `<div class="text-md text-gray-600">📝 ${remarks}</div>` : ''}
+        <div class="text-4xl mt-4 font-mono text-green-600">⏱ <span id="time">00:00</span></div>
       `;
 
       const stopBtn = document.createElement("button");
-      stopBtn.className = "bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600";
-      stopBtn.textContent = "終了";
+      stopBtn.className = "bg-red-600 text-white text-xl px-4 py-2 rounded-lg hover:bg-red-700";
+      stopBtn.textContent = "⏹ 終了";
 
       container.appendChild(label);
       container.appendChild(stopBtn);
@@ -80,6 +85,7 @@
           carNumber,
           company,
           tankNumber,
+          remarks,
           date: dateStr,
           duration: timeEl.textContent
         };
@@ -92,6 +98,7 @@
       document.getElementById("carNumber").value = "";
       document.getElementById("company").value = "";
       document.getElementById("tankNumber").value = "";
+      document.getElementById("remarks").value = "";
     }
   </script>
 </body>
