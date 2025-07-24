@@ -106,7 +106,7 @@
 <script>
 function startTimer() {
   const carNumber = document.getElementById("carNumber").value;
-  const location = document.getElementById("location").value;
+  const location = CURRENT_USER_LOCATION;
   if (!carNumber.trim() || !location.trim()) return alert("場所と車両番号は必須です");
 
   const company = document.getElementById("company").value;
