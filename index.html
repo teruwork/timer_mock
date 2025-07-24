@@ -3,8 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>積込時間計測モック（レスポンシブ＆一時停止対応）</title>
+  <title>積込時間計測モック（拡張版）</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    const CACHE_VERSION = 'v20240722-5';
+    const LAST_CACHE = localStorage.getItem('mock_cache_version');
+    if (LAST_CACHE !== CACHE_VERSION) {
+      localStorage.setItem('mock_cache_version', CACHE_VERSION);
+      if (performance.navigation.type !== 1) {
+        location.reload(true);
+      }
+    }
+  </script>
 </head>
 <body class="bg-gray-100 p-6 text-base">
   <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow space-y-6">
@@ -19,26 +29,49 @@
     <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg text-sm text-gray-700">
       <p class="mb-1 font-semibold">📘 使い方ガイド：</p>
       <ul class="list-disc pl-5 space-y-1">
-        <li>車両が到着したら <strong>車両番号（必須）</strong> を入力し、必要に応じて運送会社・タンクNo・備考も入力してください。</li>
-        <li><strong>「▶ 計測スタート」ボタン</strong>を押すと、タイマーが開始されます。</li>
-        <li>作業中断時は <strong>「⏸ 一時停止」→「▶ 再開」</strong> で対応可能です。</li>
-        <li>積み込み完了後は <strong>「⏹ 終了」</strong>で記録、<strong>「🔁 リセット」</strong>で最初からやり直せます（※誤操作防止に注意）。</li>
-        <li>画面が古いまま更新されない場合は、右上の「🔄 Reload」ボタンを押してください。</li>
+        <li>場所・車両番号（必須）を入力し、必要に応じて各項目を選択または入力してください。</li>
+        <li>出荷 or 受入を選択し、計測スタートでタイマーが始まります。</li>
+        <li>リセットや一時停止、再開、終了が可能です（リセットは確認付き）。</li>
       </ul>
     </div>
 
-    <!-- リンクボタン -->
-    <div class="text-right">
-      <a href="complete.html" class="text-blue-600 underline text-sm lg:text-base">✅ 完了済み一覧を見る</a>
+    <!-- 入力フォーム -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <select id="location" class="w-full p-4 text-xl md:text-base border rounded">
+        <option value="">📍 場所を選択（必須）</option>
+        <option value="清水工場">清水工場</option>
+        <option value="鹿島工場">鹿島工場</option>
+        <option value="石巻工場">石巻工場</option>
+      </select>
+
+      <div class="flex items-center gap-4 px-2">
+        <label><input type="radio" name="mode" value="出荷" checked class="mr-1" /> 出荷</label>
+        <label><input type="radio" name="mode" value="受入" class="mr-1" /> 受入</label>
+      </div>
+
+      <input id="carNumber" class="w-full p-4 text-xl md:text-base border rounded" placeholder="🚚 車両番号 (必須)" />
+
+      <select id="company" class="w-full p-4 text-xl md:text-base border rounded">
+        <option value="">🏢 運送会社を選択</option>
+        <option value="丸運輸">丸運輸</option>
+        <option value="清水物流">清水物流</option>
+      </select>
+
+      <select id="brand" class="w-full p-4 text-xl md:text-base border rounded">
+        <option value="">🧪 銘柄を選択</option>
+        <option value="配合A">配合A</option>
+        <option value="配合B">配合B</option>
+      </select>
+
+      <select id="tankNumber" class="w-full p-4 text-xl md:text-base border rounded">
+        <option value="">🛢 タンクNo.を選択</option>
+        <option value="T-1">T-1</option>
+        <option value="T-2">T-2</option>
+      </select>
+
+      <input id="remarks" class="w-full p-4 text-xl md:text-base border rounded md:col-span-2" placeholder="📝 備考 (任意)" />
     </div>
 
-    <!-- 入力フォーム（レスポンシブ対応） -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <input id="carNumber" class="w-full p-4 text-xl md:text-base border rounded" placeholder="🚚 車両番号 (必須) 例: 静岡800あ12-34" />
-      <input id="company" class="w-full p-4 text-xl md:text-base border rounded" placeholder="🏢 運送会社名 (任意)" />
-      <input id="tankNumber" class="w-full p-4 text-xl md:text-base border rounded" placeholder="🛢 タンクNo. (任意) 例: T-3" />
-      <input id="remarks" class="w-full p-4 text-xl md:text-base border rounded" placeholder="📝 備考 (任意)" />
-    </div>
     <div>
       <button onclick="startTimer()" class="w-full bg-blue-600 text-white text-2xl md:text-lg font-semibold py-4 md:py-3 rounded-lg hover:bg-blue-700">
         ▶ 計測スタート
@@ -54,8 +87,122 @@
     </div>
   </div>
 
-  <script>
-    // （以下の JavaScript 本体は省略せずそのまま維持）
-  </script>
+<script>
+function startTimer() {
+  const carNumber = document.getElementById("carNumber").value;
+  const location = document.getElementById("location").value;
+  if (!carNumber.trim() || !location.trim()) return alert("場所と車両番号は必須です");
+
+  const company = document.getElementById("company").value;
+  const tankNumber = document.getElementById("tankNumber").value;
+  const remarks = document.getElementById("remarks").value;
+  const brand = document.getElementById("brand").value;
+  const mode = document.querySelector('input[name="mode"]:checked').value;
+
+  const now = new Date();
+  const dateStr = now.toISOString().split("T")[0];
+
+  const container = document.createElement("div");
+  container.className = "bg-gray-100 border border-blue-200 p-4 rounded-lg flex flex-col gap-2";
+
+  const label = document.createElement("div");
+  label.innerHTML = `
+    <div class="text-2xl font-bold text-blue-800">${carNumber}</div>
+    <div class="text-base text-gray-800">📍 ${location} ／ 🧪 ${brand || "未選択"} ／ ${mode}</div>
+    <div class="text-sm text-gray-700">🏢 ${company || "-"}（🛢${tankNumber || "-"}）</div>
+    <div class="text-sm text-gray-500">📅 ${dateStr}</div>
+    ${remarks ? `<div class="text-sm text-gray-600">📝 ${remarks}</div>` : ''}
+    <div class="text-4xl mt-2 font-mono text-green-600">⏱ <span id="time">00:00</span></div>
+  `;
+
+  const btnGroup = document.createElement("div");
+  btnGroup.className = "flex gap-2 flex-wrap items-center";
+
+  const stopBtn = document.createElement("button");
+  stopBtn.className = "bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700";
+  stopBtn.textContent = "⏹ 終了";
+
+  const pauseBtn = document.createElement("button");
+  pauseBtn.className = "bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600";
+  pauseBtn.textContent = "⏸ 一時停止";
+
+  const resetBtn = document.createElement("button");
+  resetBtn.className = "bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500 border border-gray-300 text-sm"
+  resetBtn.textContent = "🔁 リセット";
+
+  container.appendChild(label);
+  btnGroup.appendChild(pauseBtn);
+  btnGroup.appendChild(stopBtn);
+  container.appendChild(btnGroup);
+  container.appendChild(resetBtn);
+  document.getElementById("timerList").appendChild(container);
+
+  let sec = 0;
+  let isPaused = false;
+  let interval = startInterval();
+
+  function startInterval() {
+    return setInterval(() => {
+      if (!isPaused) {
+        sec++;
+        updateTime();
+      }
+    }, 1000);
+  }
+
+  function updateTime() {
+    const m = String(Math.floor(sec / 60)).padStart(2, "0");
+    const s = String(sec % 60).padStart(2, "0");
+    label.querySelector("#time").textContent = `${m}:${s}`;
+  }
+
+  pauseBtn.addEventListener("click", () => {
+    isPaused = !isPaused;
+    pauseBtn.textContent = isPaused ? "▶ 再開" : "⏸ 一時停止";
+    pauseBtn.classList.toggle("bg-yellow-500", !isPaused);
+    pauseBtn.classList.toggle("bg-green-600", isPaused);
+  });
+
+  resetBtn.addEventListener("click", () => {
+    if (confirm("⚠ リセットするとタイマーは 00:00 に戻ります。よろしいですか？")) {
+      clearInterval(interval);
+      sec = 0;
+      updateTime();
+      isPaused = false;
+      pauseBtn.textContent = "⏸ 一時停止";
+      pauseBtn.classList.remove("bg-green-600");
+      pauseBtn.classList.add("bg-yellow-500");
+      interval = startInterval();
+    }
+  });
+
+  stopBtn.addEventListener("click", () => {
+    clearInterval(interval);
+    container.remove();
+    const record = {
+      carNumber,
+      company,
+      tankNumber,
+      remarks,
+      location,
+      brand,
+      mode,
+      date: dateStr,
+      duration: label.querySelector("#time").textContent
+    };
+    const data = JSON.parse(localStorage.getItem("completedRecords") || "[]");
+    data.push(record);
+    localStorage.setItem("completedRecords", JSON.stringify(data));
+  });
+
+  document.getElementById("carNumber").value = "";
+  document.getElementById("company").value = "";
+  document.getElementById("tankNumber").value = "";
+  document.getElementById("remarks").value = "";
+  document.getElementById("location").value = "";
+  document.getElementById("brand").value = "";
+  document.querySelector('input[name="mode"][value="出荷"]').checked = true;
+}
+</script>
 </body>
 </html>
