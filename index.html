@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>荷待時間計測</title>
+  <title>トラック荷待ち時間記録</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    const CACHE_VERSION = 'v20240722-14';
+    const CACHE_VERSION = 'v20240722-15';
     const LAST_CACHE = localStorage.getItem('mock_cache_version');
     if (LAST_CACHE !== CACHE_VERSION) {
       localStorage.setItem('mock_cache_version', CACHE_VERSION);
@@ -146,12 +146,13 @@
 </head>
 <body class="bg-gray-100 p-6 text-base">
   <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow space-y-6">
-    <div class="flex justify-between items-center">
+    <!-- ヘッダ部分をモバイル対応 -->
+    <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-2 md:gap-0 text-center md:text-left">
       <div>
-        <h1 class="text-2xl lg:text-xl font-bold text-blue-800">荷待時間計測</h1>
+        <h1 class="text-2xl lg:text-xl font-bold text-blue-800">トラック荷待ち時間記録</h1>
         <div class="text-sm text-gray-500">📍 所属：<span id="locationDisplay"></span></div>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex justify-center md:justify-end items-center gap-3">
         <a href="complete.html" class="text-blue-600 underline text-sm">✅ 完了済み一覧を見る</a>
         <button onclick="location.reload(true)" class="text-sm text-white bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded shadow">
           🔄 Reload（最新版に更新）
