@@ -3,16 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>トラック荷待ち時間計測モック（拡張版）</title>
+  <title>荷待ち時間計測モック（拡張版）</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    const CACHE_VERSION = 'v20240722-7';
+    // キャッシュバスティング処理（初回起動時に自動実行）
+    const CACHE_VERSION = 'v20240722-8';
     const LAST_CACHE = localStorage.getItem('mock_cache_version');
     if (LAST_CACHE !== CACHE_VERSION) {
       localStorage.setItem('mock_cache_version', CACHE_VERSION);
-      if (performance.navigation.type !== 1) {
-        location.reload(true);
-      }
+      window.location.href = window.location.href.split('?')[0] + '?v=' + CACHE_VERSION;
     }
   </script>
 </head>
