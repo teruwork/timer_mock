@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // キャッシュバスティング処理（初回起動時に自動実行）
-    const CACHE_VERSION = 'v20240722-9';
+    const CACHE_VERSION = 'v20240722-11';
     const LAST_CACHE = localStorage.getItem('mock_cache_version');
     if (LAST_CACHE !== CACHE_VERSION) {
       localStorage.setItem('mock_cache_version', CACHE_VERSION);
@@ -18,14 +18,21 @@
     const CURRENT_USER_LOCATION = '清水工場';
 
     window.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('location').value = CURRENT_USER_LOCATION;
+      document.getElementById('locationDisplay').textContent = CURRENT_USER_LOCATION;
     });
+
+    function toggleOptionalFields() {
+      document.getElementById("optionalFields").classList.toggle("hidden");
+    }
   </script>
 </head>
 <body class="bg-gray-100 p-6 text-base">
   <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow space-y-6">
     <div class="flex justify-between items-center">
-      <h1 class="text-2xl lg:text-xl font-bold text-blue-800">トラック荷待ち時間記録</h1>
+      <div>
+        <h1 class="text-2xl lg:text-xl font-bold text-blue-800">トラック荷待ち時間記録</h1>
+        <div class="text-sm text-gray-500">📍 所属：<span id="locationDisplay"></span></div>
+      </div>
       <div class="flex items-center gap-3">
         <a href="complete.html" class="text-blue-600 underline text-sm">✅ 完了済み一覧を見る</a>
         <button onclick="location.reload(true)" class="text-sm text-white bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded shadow">
@@ -38,7 +45,8 @@
     <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg text-sm text-gray-700">
       <p class="mb-1 font-semibold">📘 使い方ガイド：</p>
       <ul class="list-disc pl-5 space-y-1">
-        <li>場所・車両番号（必須）を入力し、必要に応じて各項目を選択または入力してください。</li>
+        <li>所属場所はログインユーザの設定から自動的に反映されます。</li>
+        <li>車両番号（必須）を入力し、必要に応じて詳細入力を表示してください。</li>
         <li>出荷 or 受入を選択し、計測スタートでタイマーが始まります。</li>
         <li>リセットや一時停止、再開、終了が可能です（リセットは確認付き）。</li>
       </ul>
@@ -46,20 +54,20 @@
 
     <!-- 入力フォーム -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <select id="location" class="w-full p-4 text-xl md:text-base border rounded">
-        <option value="">📍 場所を選択（必須）</option>
-        <option value="清水工場">清水工場</option>
-        <option value="鹿島工場">鹿島工場</option>
-        <option value="石巻工場">石巻工場</option>
-      </select>
-
       <div class="flex items-center gap-4 px-2">
         <label><input type="radio" name="mode" value="出荷" checked class="mr-1" /> 出荷</label>
         <label><input type="radio" name="mode" value="受入" class="mr-1" /> 受入</label>
       </div>
 
       <input id="carNumber" class="w-full p-4 text-xl md:text-base border rounded" placeholder="🚚 車両番号 (必須)" />
+    </div>
 
+    <!-- オプション入力欄のトグル -->
+    <div>
+      <button onclick="toggleOptionalFields()" class="text-sm text-blue-600 underline">+ 詳細入力を表示</button>
+    </div>
+
+    <div id="optionalFields" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
       <select id="company" class="w-full p-4 text-xl md:text-base border rounded">
         <option value="">🏢 運送会社を選択</option>
         <option value="丸運輸">丸運輸</option>
