@@ -6,7 +6,7 @@
   <title>トラック荷待ち時間記録</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    const CACHE_VERSION = 'v20240722-13';
+    const CACHE_VERSION = 'v20240722-14';
     const LAST_CACHE = localStorage.getItem('mock_cache_version');
     if (LAST_CACHE !== CACHE_VERSION) {
       localStorage.setItem('mock_cache_version', CACHE_VERSION);
@@ -26,13 +26,15 @@
     function startTimer() {
       const carNumber = document.getElementById("carNumber").value;
       const location = CURRENT_USER_LOCATION;
-      if (!carNumber.trim() || !location.trim()) return alert("場所と車両番号は必須です");
+      const mode = document.getElementById("modeSelect").value;
+
+      if (!carNumber.trim()) return alert("車両番号は必須です");
+      if (!mode.trim()) return alert("出荷 or 受入 を選択してください");
 
       const company = document.getElementById("company").value;
       const tankNumber = document.getElementById("tankNumber").value;
       const remarks = document.getElementById("remarks").value;
       const brand = document.getElementById("brand").value;
-      const mode = document.getElementById("modeSelect").value;
 
       const now = new Date();
       const dateStr = now.toISOString().split("T")[0];
@@ -162,7 +164,7 @@
       <ul class="list-disc pl-5 space-y-1">
         <li>所属場所はログインユーザの設定から自動的に反映されます。</li>
         <li>車両番号（必須）を入力し、必要に応じて詳細入力を表示してください。</li>
-        <li>出荷 or 受入を選択し、計測スタートでタイマーが始まります。</li>
+        <li>出荷 or 受入は必須選択です。計測スタートでタイマーが始まります。</li>
         <li>リセットや一時停止、再開、終了が可能です（リセットは確認付き）。</li>
       </ul>
     </div>
