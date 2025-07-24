@@ -6,7 +6,7 @@
   <title>トラック荷待ち時間記録</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    const CACHE_VERSION = 'v20240722-12';
+    const CACHE_VERSION = 'v20240722-13';
     const LAST_CACHE = localStorage.getItem('mock_cache_version');
     if (LAST_CACHE !== CACHE_VERSION) {
       localStorage.setItem('mock_cache_version', CACHE_VERSION);
@@ -21,6 +21,124 @@
 
     function toggleOptionalFields() {
       document.getElementById("optionalFields").classList.toggle("hidden");
+    }
+
+    function startTimer() {
+      const carNumber = document.getElementById("carNumber").value;
+      const location = CURRENT_USER_LOCATION;
+      if (!carNumber.trim() || !location.trim()) return alert("場所と車両番号は必須です");
+
+      const company = document.getElementById("company").value;
+      const tankNumber = document.getElementById("tankNumber").value;
+      const remarks = document.getElementById("remarks").value;
+      const brand = document.getElementById("brand").value;
+      const mode = document.getElementById("modeSelect").value;
+
+      const now = new Date();
+      const dateStr = now.toISOString().split("T")[0];
+
+      const container = document.createElement("div");
+      container.className = "bg-gray-100 border border-blue-200 p-4 rounded-lg flex flex-col gap-2";
+
+      const label = document.createElement("div");
+      label.innerHTML = `
+        <div class="text-2xl font-bold text-blue-800">${carNumber}</div>
+        <div class="text-base text-gray-800">📍 ${location} ／ 🧪 ${brand || "未選択"} ／ ${mode}</div>
+        <div class="text-sm text-gray-700">🏢 ${company || "-"}（🛢${tankNumber || "-"}）</div>
+        <div class="text-sm text-gray-500">📅 ${dateStr}</div>
+        ${remarks ? `<div class="text-sm text-gray-600">📝 ${remarks}</div>` : ''}
+        <div class="text-4xl mt-2 font-mono text-green-600">⏱ <span id="time">00:00</span></div>
+      `;
+
+      const btnGroup = document.createElement("div");
+      btnGroup.className = "flex gap-2 flex-wrap items-center";
+
+      const stopBtn = document.createElement("button");
+      stopBtn.className = "bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700";
+      stopBtn.textContent = "⏹ 終了";
+
+      const pauseBtn = document.createElement("button");
+      pauseBtn.className = "bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600";
+      pauseBtn.textContent = "⏸ 一時停止";
+
+      const resetBtnWrapper = document.createElement("div");
+      resetBtnWrapper.className = "mt-2";
+      const resetBtn = document.createElement("button");
+      resetBtn.className = "bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 text-sm"
+      resetBtn.textContent = "🔁 リセット";
+      resetBtnWrapper.appendChild(resetBtn);
+
+      container.appendChild(label);
+      btnGroup.appendChild(pauseBtn);
+      btnGroup.appendChild(stopBtn);
+      container.appendChild(btnGroup);
+      container.appendChild(resetBtnWrapper);
+      document.getElementById("timerList").appendChild(container);
+
+      let sec = 0;
+      let isPaused = false;
+      let interval = startInterval();
+
+      function startInterval() {
+        return setInterval(() => {
+          if (!isPaused) {
+            sec++;
+            updateTime();
+          }
+        }, 1000);
+      }
+
+      function updateTime() {
+        const m = String(Math.floor(sec / 60)).padStart(2, "0");
+        const s = String(sec % 60).padStart(2, "0");
+        label.querySelector("#time").textContent = `${m}:${s}`;
+      }
+
+      pauseBtn.addEventListener("click", () => {
+        isPaused = !isPaused;
+        pauseBtn.textContent = isPaused ? "▶ 再開" : "⏸ 一時停止";
+        pauseBtn.classList.toggle("bg-yellow-500", !isPaused);
+        pauseBtn.classList.toggle("bg-green-600", isPaused);
+      });
+
+      resetBtn.addEventListener("click", () => {
+        if (confirm("⚠ リセットするとタイマーは 00:00 に戻ります。よろしいですか？")) {
+          clearInterval(interval);
+          sec = 0;
+          updateTime();
+          isPaused = false;
+          pauseBtn.textContent = "⏸ 一時停止";
+          pauseBtn.classList.remove("bg-green-600");
+          pauseBtn.classList.add("bg-yellow-500");
+          interval = startInterval();
+        }
+      });
+
+      stopBtn.addEventListener("click", () => {
+        clearInterval(interval);
+        container.remove();
+        const record = {
+          carNumber,
+          company,
+          tankNumber,
+          remarks,
+          location,
+          brand,
+          mode,
+          date: dateStr,
+          duration: label.querySelector("#time").textContent
+        };
+        const data = JSON.parse(localStorage.getItem("completedRecords") || "[]");
+        data.push(record);
+        localStorage.setItem("completedRecords", JSON.stringify(data));
+      });
+
+      document.getElementById("carNumber").value = "";
+      document.getElementById("company").value = "";
+      document.getElementById("tankNumber").value = "";
+      document.getElementById("remarks").value = "";
+      document.getElementById("brand").value = "";
+      document.getElementById("modeSelect").value = "";
     }
   </script>
 </head>
@@ -39,7 +157,6 @@
       </div>
     </div>
 
-    <!-- 説明エリア -->
     <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg text-sm text-gray-700">
       <p class="mb-1 font-semibold">📘 使い方ガイド：</p>
       <ul class="list-disc pl-5 space-y-1">
@@ -50,7 +167,6 @@
       </ul>
     </div>
 
-    <!-- 入力フォーム -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <select id="modeSelect" class="w-full p-4 text-xl md:text-base border rounded">
         <option value="">📦 出荷 or 受入</option>
@@ -61,7 +177,6 @@
       <input id="carNumber" class="w-full p-4 text-xl md:text-base border rounded" placeholder="🚚 車両番号 (必須)" />
     </div>
 
-    <!-- オプション入力欄のトグル -->
     <div>
       <button onclick="toggleOptionalFields()" class="text-sm text-blue-600 underline">+ 詳細入力を表示</button>
     </div>
@@ -94,7 +209,6 @@
       </button>
     </div>
 
-    <!-- 計測中一覧 -->
     <div>
       <h2 class="text-xl lg:text-lg font-bold mb-2">📋 現在計測中の車両</h2>
       <div id="timerList" class="space-y-4">
