@@ -39,14 +39,20 @@
       const car = document.getElementById("searchCar").value.trim();
       const company = document.getElementById("searchCompany").value.trim();
       const tank = document.getElementById("searchTank").value.trim();
+      const brand = document.getElementById("searchBrand").value.trim();
+      const remarks = document.getElementById("searchRemarks").value.trim();
 
       const all = loadRecords();
       const filtered = all.filter(r => {
-        const matchDate = (!from || r.date >= from) && (!to || r.date <= to);
-        const matchCar = !car || r.carNumber.includes(car);
-        const matchCompany = !company || (r.company && r.company.includes(company));
-        const matchTank = !tank || (r.tankNumber && r.tankNumber.includes(tank));
-        return matchDate && matchCar && matchCompany && matchTank;
+        return (
+          (!from || r.date >= from) &&
+          (!to || r.date <= to) &&
+          (!car || r.carNumber.includes(car)) &&
+          (!company || (r.company && r.company === company)) &&
+          (!tank || (r.tankNumber && r.tankNumber === tank)) &&
+          (!brand || (r.brand && r.brand === brand)) &&
+          (!remarks || (r.remarks && r.remarks.includes(remarks)))
+        );
       });
 
       if (currentSortKey) {
@@ -75,9 +81,16 @@
       adv.classList.toggle("hidden");
     }
 
-    window.onload = () => {
-      filterRecords();
+    function copyToClipboard() {
+      const table = document.getElementById("recordTable");
+      let text = "";
+      for (const row of table.rows) {
+        text += [...row.cells].map(cell => cell.textContent).join("\t") + "\n";
+      }
+      navigator.clipboard.writeText(text).then(() => alert("📋 コピーしました"));
     }
+
+    window.onload = () => filterRecords();
   </script>
 </head>
 <body class="bg-gray-100 p-4 text-sm">
@@ -95,21 +108,23 @@
       </div>
 
       <div id="advancedSearch" class="hidden grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-2">
-        <select id="searchLocation" class="p-2 border rounded">
-          <option value="">📍 場所を選択</option>
-          <option value="清水工場">清水工場</option>
-          <option value="鹿島工場">鹿島工場</option>
-          <option value="石巻工場">石巻工場</option>
-        </select>
-        <select id="searchMode" class="p-2 border rounded">
-          <option value="">📦 出荷 or 受入</option>
-          <option value="出荷">出荷</option>
-          <option value="受入">受入</option>
-        </select>
         <input id="searchCar" type="text" class="p-2 border rounded w-full" placeholder="🚚 車両番号で検索" />
-        <input id="searchCompany" type="text" class="p-2 border rounded w-full" placeholder="🏢 運送会社で検索" />
-        <input id="searchBrand" type="text" class="p-2 border rounded w-full" placeholder="🧪 銘柄で検索" />
-        <input id="searchTank" type="text" class="p-2 border rounded w-full" placeholder="🛢 タンクNo.で検索" />
+        <select id="searchCompany" class="p-2 border rounded">
+          <option value="">🏢 運送会社を選択（マスタ参照）</option>
+          <option value="丸運輸">丸運輸</option>
+          <option value="清水物流">清水物流</option>
+        </select>
+        <select id="searchBrand" class="p-2 border rounded">
+          <option value="">🧪 銘柄を選択（マスタ参照）</option>
+          <option value="配合A">配合A</option>
+          <option value="配合B">配合B</option>
+        </select>
+        <select id="searchTank" class="p-2 border rounded">
+          <option value="">🛢 タンクNo.を選択（マスタ参照）</option>
+          <option value="T-1">T-1</option>
+          <option value="T-2">T-2</option>
+        </select>
+        <input id="searchRemarks" type="text" class="p-2 border rounded w-full" placeholder="📝 備考（部分一致）" />
       </div>
 
       <div class="flex flex-wrap gap-2 mt-2">
@@ -140,7 +155,6 @@
       </table>
     </div>
 
-    <!-- 戻るリンク -->
     <div class="mt-4 text-center">
       <a href="index.html" class="text-blue-600 underline">← 記録画面に戻る</a>
     </div>
