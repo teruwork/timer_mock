@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>積込時間計測モック（レスポンシブ対応）</title>
+  <title>積込時間計測モック（レスポンシブ＆一時停止対応）</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 p-6 text-base">
@@ -16,8 +16,8 @@
       <ul class="list-disc pl-5 space-y-1">
         <li>車両が到着したら <strong>車両番号（必須）</strong> を入力し、必要に応じて運送会社・タンクNo・備考も入力してください。</li>
         <li><strong>「▶ 計測スタート」ボタン</strong>を押すと、タイマーが開始されます。</li>
-        <li>積み込み作業が完了したら、<strong>「⏹ 終了」ボタン</strong>を押して終了時間を記録してください。</li>
-        <li>記録されたデータは完了一覧画面から確認・出力できます。</li>
+        <li>作業中断時は <strong>「⏸ 一時停止」→「▶ 再開」</strong> で対応可能です。</li>
+        <li>積み込み完了後は <strong>「⏹ 終了」</strong>で記録、<strong>「🔁 リセット」</strong>で最初からやり直せます（※誤操作防止に注意）。</li>
       </ul>
     </div>
 
@@ -73,36 +73,85 @@
         <div class="text-4xl md:text-2xl mt-4 font-mono text-green-600">⏱ <span id="time">00:00</span></div>
       `;
 
+      const btnGroup = document.createElement("div");
+      btnGroup.className = "flex flex-col gap-2 md:flex-row md:gap-3";
+
       const stopBtn = document.createElement("button");
       stopBtn.className = "bg-red-600 text-white text-xl md:text-base px-4 py-2 rounded-lg hover:bg-red-700";
       stopBtn.textContent = "⏹ 終了";
 
+      const pauseBtn = document.createElement("button");
+      pauseBtn.className = "bg-yellow-500 text-white text-xl md:text-base px-4 py-2 rounded-lg hover:bg-yellow-600";
+      pauseBtn.textContent = "⏸ 一時停止";
+
+      const resetBtn = document.createElement("button");
+      resetBtn.className = "bg-gray-500 text-white text-sm md:text-base px-3 py-1 rounded hover:bg-gray-600 opacity-80 hover:opacity-100 border border-gray-300"
+      resetBtn.textContent = "🔁 リセット";
+
       container.appendChild(label);
-      container.appendChild(stopBtn);
+      btnGroup.appendChild(pauseBtn);
+      btnGroup.appendChild(stopBtn);
+      container.appendChild(btnGroup);
+      container.appendChild(resetBtn); // 配置を分けることで押し間違いを防止
       document.getElementById("timerList").appendChild(container);
 
       let sec = 0;
-      const timeEl = label.querySelector("#time");
-      const interval = setInterval(() => {
-        sec++;
+      let isPaused = false;
+      let interval = startInterval();
+
+      function startInterval() {
+        return setInterval(() => {
+          if (!isPaused) {
+            sec++;
+            updateTime();
+          }
+        }, 1000);
+      }
+
+      function updateTime() {
         const m = String(Math.floor(sec / 60)).padStart(2, "0");
         const s = String(sec % 60).padStart(2, "0");
-        timeEl.textContent = `${m}:${s}`;
-      }, 1000);
+        label.querySelector("#time").textContent = `${m}:${s}`;
+      }
+
+      pauseBtn.addEventListener("click", () => {
+        if (!isPaused) {
+          isPaused = true;
+          pauseBtn.textContent = "▶ 再開";
+          pauseBtn.classList.remove("bg-yellow-500");
+          pauseBtn.classList.add("bg-green-600");
+        } else {
+          isPaused = false;
+          pauseBtn.textContent = "⏸ 一時停止";
+          pauseBtn.classList.remove("bg-green-600");
+          pauseBtn.classList.add("bg-yellow-500");
+        }
+      });
+
+      resetBtn.addEventListener("click", () => {
+        if (confirm("本当にリセットしますか？タイマーが 00:00 に戻ります。")) {
+          clearInterval(interval);
+          sec = 0;
+          updateTime();
+          isPaused = false;
+          pauseBtn.textContent = "⏸ 一時停止";
+          pauseBtn.classList.remove("bg-green-600");
+          pauseBtn.classList.add("bg-yellow-500");
+          interval = startInterval();
+        }
+      });
 
       stopBtn.addEventListener("click", () => {
         clearInterval(interval);
         container.remove();
-
         const record = {
           carNumber,
           company,
           tankNumber,
           remarks,
           date: dateStr,
-          duration: timeEl.textContent
+          duration: label.querySelector("#time").textContent
         };
-
         const data = JSON.parse(localStorage.getItem("completedRecords") || "[]");
         data.push(record);
         localStorage.setItem("completedRecords", JSON.stringify(data));
