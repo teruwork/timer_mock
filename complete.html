@@ -85,11 +85,15 @@
 
     function copyToClipboard() {
       const table = document.getElementById("recordTable");
-      let text = "";
+      const headers = [
+        "日付", "計測時間", "開始時刻", "終了時刻", "場所", "出荷/受入",
+        "車両番号", "運送会社", "銘柄", "タンクNo.", "備考"
+      ];
+      let text = headers.join("\t") + "\n";
       for (const row of table.rows) {
         text += [...row.cells].map(cell => cell.textContent).join("\t") + "\n";
       }
-      navigator.clipboard.writeText(text).then(() => alert("📋 コピーしました"));
+      navigator.clipboard.writeText(text).then(() => alert("📋 ヘッダー付きでコピーしました"));
     }
 
     window.onload = () => filterRecords();
