@@ -6,7 +6,7 @@
   <title>積込時間計測モック（拡張版）</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    const CACHE_VERSION = 'v20240722-5';
+    const CACHE_VERSION = 'v20240722-6';
     const LAST_CACHE = localStorage.getItem('mock_cache_version');
     if (LAST_CACHE !== CACHE_VERSION) {
       localStorage.setItem('mock_cache_version', CACHE_VERSION);
@@ -126,15 +126,18 @@ function startTimer() {
   pauseBtn.className = "bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600";
   pauseBtn.textContent = "⏸ 一時停止";
 
+  const resetBtnWrapper = document.createElement("div");
+  resetBtnWrapper.className = "mt-2";
   const resetBtn = document.createElement("button");
-  resetBtn.className = "bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500 border border-gray-300 text-sm"
+  resetBtn.className = "bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 text-sm"
   resetBtn.textContent = "🔁 リセット";
+  resetBtnWrapper.appendChild(resetBtn);
 
   container.appendChild(label);
   btnGroup.appendChild(pauseBtn);
   btnGroup.appendChild(stopBtn);
   container.appendChild(btnGroup);
-  container.appendChild(resetBtn);
+  container.appendChild(resetBtnWrapper);
   document.getElementById("timerList").appendChild(container);
 
   let sec = 0;
