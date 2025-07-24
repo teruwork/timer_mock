@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>積込時間計測モック（大きな文字）</title>
+  <title>積込時間計測モック（レスポンシブ対応）</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 p-6 text-base">
-  <div class="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow space-y-6">
-    <h1 class="text-2xl font-bold text-center text-blue-800">トラック積込時間 記録</h1>
+  <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow space-y-6">
+    <h1 class="text-2xl lg:text-xl font-bold text-center text-blue-800">トラック積込時間 記録</h1>
 
     <!-- 説明エリア -->
     <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg text-sm text-gray-700">
@@ -23,23 +23,25 @@
 
     <!-- リンクボタン -->
     <div class="text-right">
-      <a href="complete.html" class="text-blue-600 underline text-lg">✅ 完了済み一覧を見る</a>
+      <a href="complete.html" class="text-blue-600 underline text-sm lg:text-base">✅ 完了済み一覧を見る</a>
     </div>
 
-    <!-- 入力フォーム -->
-    <div class="space-y-4">
-      <input id="carNumber" class="w-full p-4 text-xl border rounded" placeholder="🚚 車両番号 (必須) 例: 静岡800あ12-34" />
-      <input id="company" class="w-full p-4 text-xl border rounded" placeholder="🏢 運送会社名 (任意)" />
-      <input id="tankNumber" class="w-full p-4 text-xl border rounded" placeholder="🛢 タンクNo. (任意) 例: T-3" />
-      <input id="remarks" class="w-full p-4 text-xl border rounded" placeholder="📝 備考 (任意)" />
-      <button onclick="startTimer()" class="w-full bg-blue-600 text-white text-2xl font-semibold py-4 rounded-lg hover:bg-blue-700">
+    <!-- 入力フォーム（レスポンシブ対応） -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <input id="carNumber" class="w-full p-4 text-xl md:text-base border rounded" placeholder="🚚 車両番号 (必須) 例: 静岡800あ12-34" />
+      <input id="company" class="w-full p-4 text-xl md:text-base border rounded" placeholder="🏢 運送会社名 (任意)" />
+      <input id="tankNumber" class="w-full p-4 text-xl md:text-base border rounded" placeholder="🛢 タンクNo. (任意) 例: T-3" />
+      <input id="remarks" class="w-full p-4 text-xl md:text-base border rounded" placeholder="📝 備考 (任意)" />
+    </div>
+    <div>
+      <button onclick="startTimer()" class="w-full bg-blue-600 text-white text-2xl md:text-lg font-semibold py-4 md:py-3 rounded-lg hover:bg-blue-700">
         ▶ 計測スタート
       </button>
     </div>
 
     <!-- 計測中一覧 -->
     <div>
-      <h2 class="text-xl font-bold mb-2">📋 現在計測中の車両</h2>
+      <h2 class="text-xl lg:text-lg font-bold mb-2">📋 現在計測中の車両</h2>
       <div id="timerList" class="space-y-4">
         <!-- 動的に追加 -->
       </div>
@@ -60,19 +62,19 @@
       const dateStr = now.toISOString().split("T")[0];
 
       const container = document.createElement("div");
-      container.className = "bg-gray-100 border border-blue-200 p-4 rounded-lg flex justify-between items-center";
+      container.className = "bg-gray-100 border border-blue-200 p-4 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4";
 
       const label = document.createElement("div");
       label.innerHTML = `
-        <div class="text-2xl font-bold text-blue-800">${carNumber}</div>
-        ${company || tankNumber ? `<div class="text-lg text-gray-700">${company || ''}${company && tankNumber ? '（' + tankNumber + '）' : tankNumber ? '（' + tankNumber + '）' : ''}</div>` : ''}
+        <div class="text-2xl md:text-lg font-bold text-blue-800">${carNumber}</div>
+        ${company || tankNumber ? `<div class="text-lg md:text-base text-gray-700">${company || ''}${company && tankNumber ? '（' + tankNumber + '）' : tankNumber ? '（' + tankNumber + '）' : ''}</div>` : ''}
         <div class="text-md text-gray-500">📅 ${dateStr}</div>
         ${remarks ? `<div class="text-md text-gray-600">📝 ${remarks}</div>` : ''}
-        <div class="text-4xl mt-4 font-mono text-green-600">⏱ <span id="time">00:00</span></div>
+        <div class="text-4xl md:text-2xl mt-4 font-mono text-green-600">⏱ <span id="time">00:00</span></div>
       `;
 
       const stopBtn = document.createElement("button");
-      stopBtn.className = "bg-red-600 text-white text-xl px-4 py-2 rounded-lg hover:bg-red-700";
+      stopBtn.className = "bg-red-600 text-white text-xl md:text-base px-4 py-2 rounded-lg hover:bg-red-700";
       stopBtn.textContent = "⏹ 終了";
 
       container.appendChild(label);
