@@ -3,22 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>荷待ち時間計測モック（拡張版）</title>
+  <title>トラック荷待ち時間記録</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // キャッシュバスティング処理（初回起動時に自動実行）
-    const CACHE_VERSION = 'v20240722-8';
+    const CACHE_VERSION = 'v20240722-9';
     const LAST_CACHE = localStorage.getItem('mock_cache_version');
     if (LAST_CACHE !== CACHE_VERSION) {
       localStorage.setItem('mock_cache_version', CACHE_VERSION);
       window.location.href = window.location.href.split('?')[0] + '?v=' + CACHE_VERSION;
     }
+
+    // 仮想ログインユーザの所属場所（将来はログイン情報と連携）
+    const CURRENT_USER_LOCATION = '清水工場';
+
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('location').value = CURRENT_USER_LOCATION;
+    });
   </script>
 </head>
 <body class="bg-gray-100 p-6 text-base">
   <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow space-y-6">
     <div class="flex justify-between items-center">
-      <h1 class="text-2xl lg:text-xl font-bold text-blue-800">トラック荷待ち時間 記録</h1>
+      <h1 class="text-2xl lg:text-xl font-bold text-blue-800">トラック荷待ち時間記録</h1>
       <div class="flex items-center gap-3">
         <a href="complete.html" class="text-blue-600 underline text-sm">✅ 完了済み一覧を見る</a>
         <button onclick="location.reload(true)" class="text-sm text-white bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded shadow">
