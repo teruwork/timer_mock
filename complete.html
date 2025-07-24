@@ -21,6 +21,8 @@
         row.innerHTML = `
           <td class="p-2 border">${record.date}</td>
           <td class="p-2 border">${record.duration}</td>
+          <td class="p-2 border">${record.startTime || ''}</td>
+          <td class="p-2 border">${record.endTime || ''}</td>
           <td class="p-2 border">${record.location || ""}</td>
           <td class="p-2 border">${record.mode || ""}</td>
           <td class="p-2 border">${record.carNumber}</td>
@@ -140,6 +142,8 @@
           <tr class="bg-gray-200 text-left">
             <th class="p-2 border cursor-pointer" onclick="sortBy('date')">日付</th>
             <th class="p-2 border cursor-pointer" onclick="sortBy('duration')">計測時間</th>
+            <th class="p-2 border">開始時刻</th>
+            <th class="p-2 border">終了時刻</th>
             <th class="p-2 border cursor-pointer" onclick="sortBy('location')">場所</th>
             <th class="p-2 border cursor-pointer" onclick="sortBy('mode')">出荷/受入</th>
             <th class="p-2 border cursor-pointer" onclick="sortBy('carNumber')">車両番号</th>
