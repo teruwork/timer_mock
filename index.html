@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -26,6 +27,114 @@
     function setFromList(no, mode) {
       document.getElementById('shipmentNo').value = no;
       document.getElementById('modeSelect').value = mode;
+    }
+
+    function startTimer() {
+      const shipmentNo = document.getElementById("shipmentNo").value.trim();
+      if (!shipmentNo) {
+        alert("出荷No. または 入庫No. を入力してください");
+        return;
+      }
+
+      const mode = document.getElementById("modeSelect").value;
+      const carNumber = document.getElementById("carNumber").value.trim();
+      const company = document.getElementById("company").value;
+      const brand = document.getElementById("brand").value;
+      const tankNumber = document.getElementById("tankNumber").value;
+      const remarks = document.getElementById("remarks").value;
+
+      const now = new Date();
+      const startTime = now.toLocaleTimeString();
+      const dateStr = now.toISOString().split("T")[0];
+
+      const container = document.createElement("div");
+      container.className = "bg-gray-100 border p-4 rounded-lg";
+
+      let sec = 0;
+      let isPaused = false;
+      let interval;
+
+      const label = document.createElement("div");
+      label.innerHTML = `
+        <div class="font-semibold text-lg">No: ${shipmentNo}（${mode}）</div>
+        <div class="text-sm text-gray-500">開始時刻: ${startTime}</div>
+        <div class="text-sm text-gray-600">🚚 ${carNumber || '-'} ／ 🏢 ${company || '-'} ／ 🧪 ${brand || '-'} ／ 🛢 ${tankNumber || '-'}</div>
+        ${remarks ? `<div class="text-sm text-gray-600">📝 ${remarks}</div>` : ''}
+        <div class="text-3xl mt-2 font-mono text-green-600">⏱ <span id="time">00:00</span></div>
+      `;
+
+      const pauseBtn = document.createElement("button");
+      pauseBtn.textContent = "⏸ 一時停止";
+      pauseBtn.className = "bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600";
+
+      const stopBtn = document.createElement("button");
+      stopBtn.textContent = "⏹ 終了";
+      stopBtn.className = "bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 ml-2";
+
+      const resetBtn = document.createElement("button");
+      resetBtn.textContent = "🔁 リセット";
+      resetBtn.className = "bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 ml-2";
+
+      const timeEl = label.querySelector("#time");
+
+      function updateTime() {
+        const m = String(Math.floor(sec / 60)).padStart(2, "0");
+        const s = String(sec % 60).padStart(2, "0");
+        timeEl.textContent = `${m}:${s}`;
+      }
+
+      interval = setInterval(() => {
+        if (!isPaused) {
+          sec++;
+          updateTime();
+        }
+      }, 1000);
+
+      pauseBtn.onclick = () => {
+        isPaused = !isPaused;
+        pauseBtn.textContent = isPaused ? "▶ 再開" : "⏸ 一時停止";
+        pauseBtn.classList.toggle("bg-green-600", isPaused);
+        pauseBtn.classList.toggle("bg-yellow-500", !isPaused);
+      };
+
+      resetBtn.onclick = () => {
+        if (confirm("⚠ タイマーをリセットしますか？")) {
+          sec = 0;
+          updateTime();
+        }
+      };
+
+      stopBtn.onclick = () => {
+        clearInterval(interval);
+        container.remove();
+        const endTime = new Date().toLocaleTimeString();
+        const record = {
+          date: dateStr,
+          shipmentNo,
+          mode,
+          startTime,
+          endTime,
+          duration: timeEl.textContent,
+          carNumber,
+          company,
+          brand,
+          tankNumber,
+          remarks
+        };
+        const data = JSON.parse(localStorage.getItem("completedRecords") || "[]");
+        data.push(record);
+        localStorage.setItem("completedRecords", JSON.stringify(data));
+      };
+
+      const btnGroup = document.createElement("div");
+      btnGroup.className = "mt-2 flex gap-2";
+      btnGroup.appendChild(pauseBtn);
+      btnGroup.appendChild(stopBtn);
+      btnGroup.appendChild(resetBtn);
+
+      container.appendChild(label);
+      container.appendChild(btnGroup);
+      document.getElementById("timerList").appendChild(container);
     }
   </script>
 </head>
