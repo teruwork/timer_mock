@@ -6,7 +6,7 @@
   <title>トラック荷待ち時間記録</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    const CACHE_VERSION = 'v20240722-16';
+    const CACHE_VERSION = 'v20240730-01';
     const LAST_CACHE = localStorage.getItem('mock_cache_version');
     if (LAST_CACHE !== CACHE_VERSION) {
       localStorage.setItem('mock_cache_version', CACHE_VERSION);
@@ -23,138 +23,20 @@
       document.getElementById("optionalFields").classList.toggle("hidden");
     }
 
-    function startTimer() {
-      const carNumber = document.getElementById("carNumber").value;
-      const location = CURRENT_USER_LOCATION;
-      const mode = document.getElementById("modeSelect").value;
-
-      if (!carNumber.trim()) return alert("車両番号は必須です");
-      if (!mode.trim()) return alert("出荷 or 受入 を選択してください");
-
-      const company = document.getElementById("company").value;
-      const tankNumber = document.getElementById("tankNumber").value;
-      const remarks = document.getElementById("remarks").value;
-      const brand = document.getElementById("brand").value;
-
-      const startTime = new Date();
-      const dateStr = startTime.toISOString().split("T")[0];
-
-      const container = document.createElement("div");
-      container.className = "bg-gray-100 border border-blue-200 p-4 rounded-lg flex flex-col gap-2";
-
-      const label = document.createElement("div");
-      label.innerHTML = `
-        <div class="text-2xl font-bold text-blue-800">${carNumber}</div>
-        <div class="text-base text-gray-800">📍 ${location} ／ 🧪 ${brand || "未選択"} ／ ${mode}</div>
-        <div class="text-sm text-gray-700">🏢 ${company || "-"}（🛢${tankNumber || "-"}）</div>
-        <div class="text-sm text-gray-500">📅 ${dateStr}</div>
-        ${remarks ? `<div class="text-sm text-gray-600">📝 ${remarks}</div>` : ''}
-        <div class="text-4xl mt-2 font-mono text-green-600">⏱ <span id="time">00:00</span></div>
-      `;
-
-      const btnGroup = document.createElement("div");
-      btnGroup.className = "flex gap-2 flex-wrap items-center";
-
-      const stopBtn = document.createElement("button");
-      stopBtn.className = "bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700";
-      stopBtn.textContent = "⏹ 終了";
-
-      const pauseBtn = document.createElement("button");
-      pauseBtn.className = "bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600";
-      pauseBtn.textContent = "⏸ 一時停止";
-
-      const resetBtnWrapper = document.createElement("div");
-      resetBtnWrapper.className = "mt-2";
-      const resetBtn = document.createElement("button");
-      resetBtn.className = "bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 text-sm"
-      resetBtn.textContent = "🔁 リセット";
-      resetBtnWrapper.appendChild(resetBtn);
-
-      container.appendChild(label);
-      btnGroup.appendChild(pauseBtn);
-      btnGroup.appendChild(stopBtn);
-      container.appendChild(btnGroup);
-      container.appendChild(resetBtnWrapper);
-      document.getElementById("timerList").appendChild(container);
-
-      let sec = 0;
-      let isPaused = false;
-      let interval = startInterval();
-
-      function startInterval() {
-        return setInterval(() => {
-          if (!isPaused) {
-            sec++;
-            updateTime();
-          }
-        }, 1000);
-      }
-
-      function updateTime() {
-        const m = String(Math.floor(sec / 60)).padStart(2, "0");
-        const s = String(sec % 60).padStart(2, "0");
-        label.querySelector("#time").textContent = `${m}:${s}`;
-      }
-
-      pauseBtn.addEventListener("click", () => {
-        isPaused = !isPaused;
-        pauseBtn.textContent = isPaused ? "▶ 再開" : "⏸ 一時停止";
-        pauseBtn.classList.toggle("bg-yellow-500", !isPaused);
-        pauseBtn.classList.toggle("bg-green-600", isPaused);
-      });
-
-      resetBtn.addEventListener("click", () => {
-        if (confirm("⚠ リセットするとタイマーは 00:00 に戻ります。よろしいですか？")) {
-          clearInterval(interval);
-          sec = 0;
-          updateTime();
-          isPaused = false;
-          pauseBtn.textContent = "⏸ 一時停止";
-          pauseBtn.classList.remove("bg-green-600");
-          pauseBtn.classList.add("bg-yellow-500");
-          interval = startInterval();
-        }
-      });
-
-      stopBtn.addEventListener("click", () => {
-        clearInterval(interval);
-        const endTime = new Date();
-        container.remove();
-        const record = {
-          carNumber,
-          company,
-          tankNumber,
-          remarks,
-          location,
-          brand,
-          mode,
-          date: dateStr,
-          startTime: startTime.toLocaleTimeString(),
-          endTime: endTime.toLocaleTimeString(),
-          duration: label.querySelector("#time").textContent
-        };
-        const data = JSON.parse(localStorage.getItem("completedRecords") || "[]");
-        data.push(record);
-        localStorage.setItem("completedRecords", JSON.stringify(data));
-      });
-
-      document.getElementById("carNumber").value = "";
-      document.getElementById("company").value = "";
-      document.getElementById("tankNumber").value = "";
-      document.getElementById("remarks").value = "";
-      document.getElementById("brand").value = "";
-      document.getElementById("modeSelect").value = "";
+    function setFromList(no, mode) {
+      document.getElementById('shipmentNo').value = no;
+      document.getElementById('modeSelect').value = mode;
     }
   </script>
 </head>
 <body class="bg-gray-100 p-6 text-base">
   <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow space-y-6">
-    <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-2 md:gap-0 text-center md:text-left">
+    <div class="flex justify-between items-center">
       <div>
-        <h1 class="text-2xl lg:text-xl font-bold text-blue-800">トラック荷待ち時間記録</h1>
+        <h1 class="text-2xl font-bold text-blue-800">トラック荷待ち時間記録</h1>
         <div class="text-sm text-gray-500">📍 所属：<span id="locationDisplay"></span></div>
       </div>
-      <div class="flex justify-center md:justify-end items-center gap-3">
+      <div class="flex items-center gap-3">
         <a href="complete.html" class="text-blue-600 underline text-sm">✅ 完了済み一覧を見る</a>
         <button onclick="location.reload(true)" class="text-sm text-white bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded shadow">
           🔄 Reload（最新版に更新）
@@ -165,60 +47,56 @@
     <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg text-sm text-gray-700">
       <p class="mb-1 font-semibold">📘 使い方ガイド：</p>
       <ul class="list-disc pl-5 space-y-1">
-        <li>所属場所はログインユーザの設定から自動的に反映されます。</li>
-        <li>車両番号（必須）を入力し、必要に応じて詳細入力を表示してください。</li>
-        <li>出荷 or 受入は必須選択です。計測スタートでタイマーが始まります。</li>
-        <li>リセットや一時停止、再開、終了が可能です（リセットは確認付き）。</li>
+        <li>出荷No. / 入庫No. はバーコード読み取りまたは一覧画面から選択可能です。</li>
+        <li>操作はスマホ・タブレットでも快適に行えます。</li>
+        <li>詳細入力（車番・運送会社・銘柄など）は必要に応じて展開してください。</li>
       </ul>
     </div>
 
+    <!-- 入力欄（出荷/入庫No.） -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <select id="modeSelect" class="w-full p-4 text-xl md:text-base border rounded">
-        <option value="">📦 出荷 or 受入</option>
+      <input id="shipmentNo" class="w-full p-4 text-xl border rounded" placeholder="📦 出荷No. または 入庫No. を入力 / 読み取り" />
+      <select id="modeSelect" class="w-full p-4 text-xl border rounded bg-gray-100" disabled>
         <option value="出荷">出荷</option>
-        <option value="受入">受入</option>
+        <option value="入庫">入庫</option>
       </select>
-
-      <input id="carNumber" class="w-full p-4 text-xl md:text-base border rounded" placeholder="🚚 車両番号 (必須)" />
     </div>
 
     <div>
       <button onclick="toggleOptionalFields()" class="text-sm text-blue-600 underline">+ 詳細入力を表示</button>
     </div>
 
+    <!-- 詳細入力欄 -->
     <div id="optionalFields" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
-      <select id="company" class="w-full p-4 text-xl md:text-base border rounded">
+      <input id="carNumber" class="w-full p-4 text-xl border rounded" placeholder="🚚 車両番号（任意）" />
+      <select id="company" class="w-full p-4 text-xl border rounded">
         <option value="">🏢 運送会社を選択</option>
         <option value="丸運輸">丸運輸</option>
         <option value="清水物流">清水物流</option>
       </select>
-
-      <select id="brand" class="w-full p-4 text-xl md:text-base border rounded">
+      <select id="brand" class="w-full p-4 text-xl border rounded">
         <option value="">🧪 銘柄を選択</option>
         <option value="配合A">配合A</option>
         <option value="配合B">配合B</option>
       </select>
-
-      <select id="tankNumber" class="w-full p-4 text-xl md:text-base border rounded">
+      <select id="tankNumber" class="w-full p-4 text-xl border rounded">
         <option value="">🛢 タンクNo.を選択</option>
         <option value="T-1">T-1</option>
         <option value="T-2">T-2</option>
       </select>
-
-      <input id="remarks" class="w-full p-4 text-xl md:text-base border rounded md:col-span-2" placeholder="📝 備考 (任意)" />
+      <input id="remarks" class="w-full p-4 text-xl border rounded md:col-span-2" placeholder="📝 備考（任意）" />
     </div>
 
     <div>
-      <button onclick="startTimer()" class="w-full bg-blue-600 text-white text-2xl md:text-lg font-semibold py-4 md:py-3 rounded-lg hover:bg-blue-700">
+      <button onclick="startTimer()" class="w-full bg-blue-600 text-white text-2xl font-semibold py-4 rounded-lg hover:bg-blue-700">
         ▶ 計測スタート
       </button>
     </div>
 
+    <!-- 計測中一覧 -->
     <div>
-      <h2 class="text-xl lg:text-lg font-bold mb-2">📋 現在計測中の車両</h2>
-      <div id="timerList" class="space-y-4">
-        <!-- 動的に追加 -->
-      </div>
+      <h2 class="text-xl font-bold mb-2">📋 現在計測中の記録</h2>
+      <div id="timerList" class="space-y-4"></div>
     </div>
   </div>
 </body>
