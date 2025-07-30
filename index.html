@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>トラック荷待ち時間記録</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@zxing/library@latest"></script> <!-- ZXingバーコード読み取り用 -->
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
   <style>
     video#barcodePreview {
       width: 100%;
@@ -51,44 +51,145 @@
       <button onclick="openNoSelector()" class="text-sm text-blue-600 underline">🔍 出荷/入庫No. 選択画面を開く</button>
     </div>
 
-    <!-- 以下、元のフォームやタイマー処理（省略） -->
+    <div>
+      <button onclick="startTimer()" id="startButton" class="w-full bg-blue-600 text-white text-2xl font-semibold py-4 rounded-lg hover:bg-blue-700 mt-4">
+        ▶ 計測スタート
+      </button>
+    </div>
 
-    <script>
-      const CURRENT_USER_LOCATION = '清水工場';
-      window.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('locationDisplay').textContent = CURRENT_USER_LOCATION;
-      });
-
-      function openNoSelector() {
-        // ダミー：将来的にはモーダルなどで一覧表示
-        const exampleNo = prompt("出荷No.または入庫No.を入力してください（例：S12345）");
-        if (exampleNo) document.getElementById('shipmentNo').value = exampleNo;
-      }
-
-      let codeReader;
-      async function openBarcodeScanner() {
-        const preview = document.getElementById('barcodePreview');
-        preview.classList.remove('hidden');
-        codeReader = new ZXing.BrowserMultiFormatReader();
-
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-          preview.srcObject = stream;
-          preview.play();
-
-          codeReader.decodeFromVideoDevice(null, 'barcodePreview', (result, err) => {
-            if (result) {
-              document.getElementById('shipmentNo').value = result.text;
-              codeReader.reset();
-              preview.classList.add('hidden');
-              stream.getTracks().forEach(track => track.stop());
-            }
-          });
-        } catch (err) {
-          alert("カメラにアクセスできませんでした: " + err.message);
-        }
-      }
-    </script>
+    <div>
+      <h2 class="text-xl font-bold mb-2">📋 現在計測中の記録</h2>
+      <div id="timerList" class="space-y-4"></div>
+    </div>
   </div>
+
+  <script>
+    const CURRENT_USER_LOCATION = '清水工場';
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('locationDisplay').textContent = CURRENT_USER_LOCATION;
+    });
+
+    function openNoSelector() {
+      const exampleNo = prompt("出荷No.または入庫No.を入力してください（例：S12345）");
+      if (exampleNo) document.getElementById('shipmentNo').value = exampleNo;
+    }
+
+    let codeReader;
+    async function openBarcodeScanner() {
+      const preview = document.getElementById('barcodePreview');
+      preview.classList.remove('hidden');
+      codeReader = new ZXing.BrowserMultiFormatReader();
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        preview.srcObject = stream;
+        preview.play();
+
+        codeReader.decodeFromVideoDevice(null, 'barcodePreview', (result, err) => {
+          if (result) {
+            document.getElementById('shipmentNo').value = result.text;
+            codeReader.reset();
+            preview.classList.add('hidden');
+            stream.getTracks().forEach(track => track.stop());
+          }
+        });
+      } catch (err) {
+        alert("カメラにアクセスできませんでした: " + err.message);
+      }
+    }
+
+    function startTimer() {
+      const shipmentNo = document.getElementById("shipmentNo").value.trim();
+      if (!shipmentNo) {
+        alert("出荷No. または 入庫No. を入力してください");
+        return;
+      }
+
+      const now = new Date();
+      const startTime = now.toLocaleTimeString();
+      const dateStr = now.toISOString().split("T")[0];
+
+      const container = document.createElement("div");
+      container.className = "bg-gray-100 border p-4 rounded-lg";
+
+      let sec = 0;
+      let isPaused = false;
+      let interval;
+
+      const label = document.createElement("div");
+      label.innerHTML = `
+        <div class="font-semibold text-lg">No: ${shipmentNo}</div>
+        <div class="text-sm text-gray-500">開始時刻: ${startTime}</div>
+        <div class="text-3xl mt-2 font-mono text-green-600">⏱ <span id="time">00:00</span></div>
+      `;
+
+      const pauseBtn = document.createElement("button");
+      pauseBtn.textContent = "⏸ 一時停止";
+      pauseBtn.className = "bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600";
+
+      const stopBtn = document.createElement("button");
+      stopBtn.textContent = "⏹ 終了";
+      stopBtn.className = "bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 ml-2";
+
+      const resetBtn = document.createElement("button");
+      resetBtn.textContent = "🔁 リセット";
+      resetBtn.className = "bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600 ml-2";
+
+      const timeEl = label.querySelector("#time");
+
+      function updateTime() {
+        const m = String(Math.floor(sec / 60)).padStart(2, "0");
+        const s = String(sec % 60).padStart(2, "0");
+        timeEl.textContent = `${m}:${s}`;
+      }
+
+      interval = setInterval(() => {
+        if (!isPaused) {
+          sec++;
+          updateTime();
+        }
+      }, 1000);
+
+      pauseBtn.onclick = () => {
+        isPaused = !isPaused;
+        pauseBtn.textContent = isPaused ? "▶ 再開" : "⏸ 一時停止";
+        pauseBtn.classList.toggle("bg-green-600", isPaused);
+        pauseBtn.classList.toggle("bg-yellow-500", !isPaused);
+      };
+
+      resetBtn.onclick = () => {
+        if (confirm("⚠ タイマーをリセットしますか？")) {
+          sec = 0;
+          updateTime();
+        }
+      };
+
+      stopBtn.onclick = () => {
+        clearInterval(interval);
+        container.remove();
+        const endTime = new Date().toLocaleTimeString();
+        const record = {
+          date: dateStr,
+          shipmentNo,
+          startTime,
+          endTime,
+          duration: timeEl.textContent
+        };
+        const data = JSON.parse(localStorage.getItem("completedRecords") || "[]");
+        data.push(record);
+        localStorage.setItem("completedRecords", JSON.stringify(data));
+      };
+
+      const btnGroup = document.createElement("div");
+      btnGroup.className = "mt-2 flex gap-2";
+      btnGroup.appendChild(pauseBtn);
+      btnGroup.appendChild(stopBtn);
+      btnGroup.appendChild(resetBtn);
+
+      container.appendChild(label);
+      container.appendChild(btnGroup);
+      document.getElementById("timerList").appendChild(container);
+    }
+  </script>
 </body>
 </html>
