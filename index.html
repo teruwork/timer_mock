@@ -2,20 +2,35 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>トラック荷待ち時間記録</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@zxing/library@latest"></script>
   <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-size: 16px;
+      line-height: 1.5;
+      background-color: #f3f4f6;
+    }
     video#barcodePreview {
       width: 100%;
       border-radius: 0.5rem;
       margin-top: 0.5rem;
     }
+    input, select, button {
+      font-size: 1rem;
+    }
   </style>
 </head>
-<body class="bg-gray-100 p-6 text-base">
-  <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow space-y-6">
+<body class="bg-gray-100 p-4 text-base">
+  <div class="max-w-4xl mx-auto bg-white p-4 sm:p-6 rounded-xl shadow space-y-6">
     <div class="flex justify-between items-center">
       <div>
         <h1 class="text-2xl font-bold text-blue-800">トラック荷待ち時間記録</h1>
@@ -52,6 +67,30 @@
     </div>
 
     <div>
+      <button onclick="toggleOptionalFields()" class="text-sm text-blue-600 underline mt-2">+ 詳細入力を表示</button>
+    </div>
+
+    <div id="optionalFields" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+      <input id="carNumber" class="w-full p-4 text-xl border rounded" placeholder="🚚 車両番号（任意）" />
+      <select id="company" class="w-full p-4 text-xl border rounded">
+        <option value="">🏢 運送会社を選択</option>
+        <option value="丸運輸">丸運輸</option>
+        <option value="清水物流">清水物流</option>
+      </select>
+      <select id="brand" class="w-full p-4 text-xl border rounded">
+        <option value="">🧪 銘柄を選択</option>
+        <option value="配合A">配合A</option>
+        <option value="配合B">配合B</option>
+      </select>
+      <select id="tankNumber" class="w-full p-4 text-xl border rounded">
+        <option value="">🛢 タンクNo.を選択</option>
+        <option value="T-1">T-1</option>
+        <option value="T-2">T-2</option>
+      </select>
+      <input id="remarks" class="w-full p-4 text-xl border rounded md:col-span-2" placeholder="📝 備考（任意）" />
+    </div>
+
+    <div>
       <button onclick="startTimer()" id="startButton" class="w-full bg-blue-600 text-white text-2xl font-semibold py-4 rounded-lg hover:bg-blue-700 mt-4">
         ▶ 計測スタート
       </button>
@@ -68,6 +107,10 @@
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('locationDisplay').textContent = CURRENT_USER_LOCATION;
     });
+
+    function toggleOptionalFields() {
+      document.getElementById("optionalFields").classList.toggle("hidden");
+    }
 
     function openNoSelector() {
       const exampleNo = prompt("出荷No.または入庫No.を入力してください（例：S12345）");
@@ -105,6 +148,12 @@
         return;
       }
 
+      const carNumber = document.getElementById("carNumber")?.value || '';
+      const company = document.getElementById("company")?.value || '';
+      const brand = document.getElementById("brand")?.value || '';
+      const tankNumber = document.getElementById("tankNumber")?.value || '';
+      const remarks = document.getElementById("remarks")?.value || '';
+
       const now = new Date();
       const startTime = now.toLocaleTimeString();
       const dateStr = now.toISOString().split("T")[0];
@@ -120,6 +169,8 @@
       label.innerHTML = `
         <div class="font-semibold text-lg">No: ${shipmentNo}</div>
         <div class="text-sm text-gray-500">開始時刻: ${startTime}</div>
+        <div class="text-sm text-gray-600">🚚 ${carNumber || '-'} ／ 🏢 ${company || '-'} ／ 🧪 ${brand || '-'} ／ 🛢 ${tankNumber || '-'}</div>
+        ${remarks ? `<div class="text-sm text-gray-600">📝 ${remarks}</div>` : ''}
         <div class="text-3xl mt-2 font-mono text-green-600">⏱ <span id="time">00:00</span></div>
       `;
 
@@ -173,7 +224,12 @@
           shipmentNo,
           startTime,
           endTime,
-          duration: timeEl.textContent
+          duration: timeEl.textContent,
+          carNumber,
+          company,
+          brand,
+          tankNumber,
+          remarks
         };
         const data = JSON.parse(localStorage.getItem("completedRecords") || "[]");
         data.push(record);
@@ -181,7 +237,7 @@
       };
 
       const btnGroup = document.createElement("div");
-      btnGroup.className = "mt-2 flex gap-2";
+      btnGroup.className = "mt-2 flex flex-wrap gap-2";
       btnGroup.appendChild(pauseBtn);
       btnGroup.appendChild(stopBtn);
       btnGroup.appendChild(resetBtn);
