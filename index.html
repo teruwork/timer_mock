@@ -1,34 +1,42 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>トラック荷待ち時間記録</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@zxing/library@latest"></script>
   <style>
-    html, body {
+    html,
+    body {
       margin: 0;
       padding: 0;
       width: 100%;
       height: 100%;
       -webkit-tap-highlight-color: transparent;
     }
+
     body {
       font-size: 16px;
       line-height: 1.5;
       background-color: #f3f4f6;
     }
+
     video#barcodePreview {
       width: 100%;
       border-radius: 0.5rem;
       margin-top: 0.5rem;
     }
-    input, select, button {
+
+    input,
+    select,
+    button {
       font-size: 1rem;
     }
   </style>
 </head>
+
 <body class="bg-gray-100 p-4 text-base">
   <div class="max-w-4xl mx-auto bg-white p-4 sm:p-6 rounded-xl shadow space-y-6">
     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
@@ -38,7 +46,8 @@
       </div>
       <div class="flex flex-wrap items-center gap-3">
         <a href="complete.html" class="text-blue-600 underline text-sm whitespace-nowrap">✅ 完了済み一覧を見る</a>
-        <button onclick="location.reload(true)" class="text-sm text-white bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded shadow whitespace-nowrap">
+        <button onclick="location.reload(true)"
+          class="text-sm text-white bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded shadow whitespace-nowrap">
           🔄 Reload（最新版に更新）
         </button>
       </div>
@@ -62,8 +71,135 @@
 
     <video id="barcodePreview" class="hidden"></video>
 
-    <div>
-      <button onclick="openNoSelector()" class="text-sm text-blue-600 underline">🔍 出荷/入庫No. 選択画面を開く</button>
+    <div class="flex gap-4">
+      <button onclick="openShipmentSelector()" class="text-sm text-blue-600 underline">
+        🔍 出荷No.選択画面を開く
+      </button>
+      <button onclick="openInboundSelector()" class="text-sm text-blue-600 underline">
+        🔍 入庫No.選択画面を開く
+      </button>
+    </div>
+
+    <!-- 出荷No. 選択モーダル -->
+    <div id="shipmentModal" class="hidden fixed inset-0 z-50">
+      <div class="absolute inset-0 bg-black/40" onclick="closeModal('shipmentModal')"></div>
+      <div
+        class="absolute inset-x-4 top-16 bottom-16 bg-white rounded-xl shadow-lg p-4 overflow-auto max-w-3xl mx-auto">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold">📦 出荷No.を選択</h3>
+          <button class="text-gray-500 hover:text-gray-700" onclick="closeModal('shipmentModal')">✕</button>
+        </div>
+        <div class="mb-3 grid grid-cols-1 sm:grid-cols-5 gap-2 items-end">
+          <div>
+            <label class="text-xs text-gray-500 block">出荷日 From</label>
+            <input type="date" id="shipFrom" class="w-full border rounded p-2" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 block">出荷日 To</label>
+            <input type="date" id="shipTo" class="w-full border rounded p-2" />
+          </div>
+          <div class="sm:col-span-3 text-right">
+            <button class="inline-flex items-center px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm"
+              onclick="applyShipmentFilter()">検索</button>
+            <button class="inline-flex items-center px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-sm ml-2"
+              onclick="resetShipmentFilter()">クリア</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-[1400px] w-full text-sm border" id="shipmentTable">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="border px-2 py-1 text-left cursor-pointer sticky left-0 z-20 bg-gray-50" data-key="no">出荷No.
+                </th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="shipDate">出荷日</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="timeBand">時</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="deliveryDate">届け日</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="customerCode">ｺｰﾄﾞ</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="customerName">得意先名</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="destinationName">届け先名</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="productCode">ｺｰﾄﾞ</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="productName">製品名</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="status">状況</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="form">形態</th>
+                <th class="border px-2 py-1 text-right cursor-pointer" data-key="quantity">個数</th>
+                <th class="border px-2 py-1 text-right cursor-pointer" data-key="weightKg">重量(Kg)</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="gate">ｹﾞｰﾄ</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="arrived">届</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="carrierCode">ｺｰﾄﾞ</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="carrierName">運送会社名</th>
+                <th class="border px-2 py-1"></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 入庫No. 選択モーダル -->
+    <div id="inboundModal" class="hidden fixed inset-0 z-50">
+      <div class="absolute inset-0 bg-black/40" onclick="closeModal('inboundModal')"></div>
+      <div
+        class="absolute inset-x-4 top-16 bottom-16 bg-white rounded-xl shadow-lg p-4 overflow-auto max-w-3xl mx-auto">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold">📥 入庫No.を選択</h3>
+          <button class="text-gray-500 hover:text-gray-700" onclick="closeModal('inboundModal')">✕</button>
+        </div>
+        <div class="mb-3 grid grid-cols-1 sm:grid-cols-6 gap-2 items-end">
+          <div>
+            <label class="text-xs text-gray-500 block">入庫日 From</label>
+            <input type="date" id="inboundFrom" class="w-full border rounded p-2" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 block">入庫日 To</label>
+            <input type="date" id="inboundTo" class="w-full border rounded p-2" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs text-gray-500 block">仕入先名</label>
+            <input type="text" id="fSupplierName" class="w-full border rounded p-2" placeholder="例）駿河飼料" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs text-gray-500 block">運送会社名</label>
+            <input type="text" id="fCarrierName" class="w-full border rounded p-2" placeholder="例）港南物流" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs text-gray-500 block">原料名</label>
+            <input type="text" id="fMaterialName" class="w-full border rounded p-2" placeholder="例）魚粉" />
+          </div>
+          <div class="sm:col-span-6 text-right">
+            <button class="inline-flex items-center px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm"
+              onclick="applyInboundFilter()">検索</button>
+            <button class="inline-flex items-center px-3 py-2 rounded bg-gray-200 hover:bg-gray-300 text-sm ml-2"
+              onclick="resetInboundFilter()">クリア</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-[1400px] w-full text-sm border" id="inboundTable">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="border px-2 py-1 text-left cursor-pointer sticky left-0 z-20 bg-gray-50"
+                  data-key="inboundDate">入庫日</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="startTime">開始時間</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="endTime">終了時間</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="supplierCode">仕入先ｺｰﾄﾞ</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="supplierName">仕入先名</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="carrierCode">運送会社ｺｰﾄﾞ</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="carrierName">運送会社名</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="materialCode">原料ｺｰﾄﾞ</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="materialName">原料名</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="form">形態</th>
+                <th class="border px-2 py-1 text-right cursor-pointer" data-key="weightKg">重量(kg)</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="cardNo">ｶｰﾄﾞNo.</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="intakeType">受入口区分</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="tanks">投入タンク</th>
+                <th class="border px-2 py-1 text-left cursor-pointer" data-key="inboundNo">入庫No.</th>
+                <th class="border px-2 py-1"></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <div>
@@ -91,7 +227,8 @@
     </div>
 
     <div>
-      <button onclick="startTimer()" id="startButton" class="w-full bg-blue-600 text-white text-2xl font-semibold py-4 rounded-lg hover:bg-blue-700 mt-4">
+      <button onclick="startTimer()" id="startButton"
+        class="w-full bg-blue-600 text-white text-2xl font-semibold py-4 rounded-lg hover:bg-blue-700 mt-4">
         ▶ 計測スタート
       </button>
     </div>
@@ -112,10 +249,279 @@
       document.getElementById("optionalFields").classList.toggle("hidden");
     }
 
-    function openNoSelector() {
-      const exampleNo = prompt("出荷No.または入庫No.を入力してください（例：S12345）");
-      if (exampleNo) document.getElementById('shipmentNo').value = exampleNo;
+    // <-- 出荷・入庫No.選択　ここから -->
+    const BASE_DATA = { shipment: [], inbound: [] };
+    const SORT_STATE = { shipment: [], inbound: [] };
+    // ダミーデータ（3行ずつ）
+    const DUMMY_SHIPMENTS = [
+      { no: 'S-1001', shipDate: '2025-08-15', timeBand: '早朝', deliveryDate: '2025-08-16', customerCode: 'C001', customerName: '清水畜産', destinationName: '清水第2倉庫', productCode: 'P-11', productName: '配合A', status: '受付済', form: 'バラ', quantity: '', weightKg: 12450, gate: '01', arrived: '届', carrierCode: 'T01', carrierName: '丸運輸' },
+      { no: 'S-1002', shipDate: '2025-08-15', timeBand: '午前', deliveryDate: '2025-08-16', customerCode: 'C017', customerName: '富士牧場', destinationName: '富士出荷所', productCode: 'P-21', productName: '配合B', status: '受付済', form: '紙袋', quantity: 40, weightKg: 800, gate: '03', arrived: '', carrierCode: 'T12', carrierName: '清水物流' },
+      { no: 'S-1003', shipDate: '2025-08-15', timeBand: '午前', deliveryDate: '2025-08-17', customerCode: 'C102', customerName: '焼津牧場', destinationName: '焼津倉庫', productCode: 'P-31', productName: '配合C', status: '出荷完了', form: 'TB', quantity: 2, weightKg: 2000, gate: '02', arrived: '届', carrierCode: 'T07', carrierName: '富士運送' },
+    ];
+
+    const DUMMY_INBOUNDS = [
+      { inboundDate: '2025-08-15', startTime: '09:00', endTime: '09:40', supplierCode: 'S011', supplierName: '駿河飼料', carrierCode: 'T21', carrierName: '駿河運輸', materialCode: 'M-01', materialName: 'トウモロコシ', form: 'バラ', weightKg: 18000, cardNo: '1', intakeType: '無粉砕', tanks: '207,208', inboundNo: 'I-2001' },
+      { inboundDate: '2025-08-15', startTime: '10:30', endTime: '11:10', supplierCode: 'S034', supplierName: '東海ミール', carrierCode: 'T09', carrierName: '港南物流', materialCode: 'M-19', materialName: '魚粉', form: '袋物', weightKg: 900, cardNo: '5', intakeType: '要粉砕', tanks: '003', inboundNo: 'I-2002' },
+      { inboundDate: '2025-08-15', startTime: '13:20', endTime: '14:00', supplierCode: 'S078', supplierName: '北海穀物', carrierCode: 'T13', carrierName: '東海運送', materialCode: 'M-07', materialName: '大豆', form: '袋物', weightKg: 24000, cardNo: '2', intakeType: 'ｼﾞｪｯﾄﾊﾟｯｸ', tanks: '115', inboundNo: 'I-2003' },
+    ];
+
+    function openShipmentSelector() {
+      BASE_DATA.shipment = DUMMY_SHIPMENTS;
+      SORT_STATE.shipment = [];
+      renderTable('shipmentTable', DUMMY_SHIPMENTS, 'shipment');
+      openModal('shipmentModal');
     }
+
+    function openInboundSelector() {
+      BASE_DATA.inbound = DUMMY_INBOUNDS;
+      SORT_STATE.inbound = [];
+      renderTable('inboundTable', DUMMY_INBOUNDS, 'inbound');
+      openModal('inboundModal');
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+      // Esc キーで閉じる
+      const escHandler = (e) => { if (e.key === 'Escape') { closeModal(id); } };
+      document.addEventListener('keydown', escHandler, { once: true });
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function renderTable(tableId, rows, type) {
+      const tbody = document.querySelector(`#${tableId} tbody`);
+      tbody.innerHTML = '';
+
+      const columns = type === 'shipment'
+        ? [
+          { key: 'no', align: 'left' }, { key: 'shipDate', align: 'left' }, { key: 'timeBand', align: 'left' },
+          { key: 'deliveryDate', align: 'left' }, { key: 'customerCode', align: 'left' }, { key: 'customerName', align: 'left' },
+          { key: 'destinationName', align: 'left' }, { key: 'productCode', align: 'left' }, { key: 'productName', align: 'left' },
+          { key: 'status', align: 'left' }, { key: 'form', align: 'left' }, { key: 'quantity', align: 'right' },
+          { key: 'weightKg', align: 'right' }, { key: 'gate', align: 'left' }, { key: 'arrived', align: 'left' },
+          { key: 'carrierCode', align: 'left' }, { key: 'carrierName', align: 'left' },
+        ]
+        : [
+          { key: 'inboundDate', align: 'left' }, { key: 'startTime', align: 'left' }, { key: 'endTime', align: 'left' },
+          { key: 'supplierCode', align: 'left' }, { key: 'supplierName', align: 'left' }, { key: 'carrierCode', align: 'left' },
+          { key: 'carrierName', align: 'left' }, { key: 'materialCode', align: 'left' }, { key: 'materialName', align: 'left' },
+          { key: 'form', align: 'left' }, { key: 'weightKg', align: 'right' }, { key: 'cardNo', align: 'left' },
+          { key: 'intakeType', align: 'left' }, { key: 'tanks', align: 'left' }, { key: 'inboundNo', align: 'left' },
+        ];
+
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        const tr = document.createElement('tr');
+        let cells = '';
+        for (let c = 0; c < columns.length; c++) {
+          const col = columns[c];
+          let val = r[col.key] ?? '';
+          if (col.key === 'weightKg' && val !== '') val = Number(val).toLocaleString();
+          const align = col.align === 'right' ? 'text-right' : '';
+          const sticky = c === 0 ? ' sticky left-0 bg-white z-10' : '';
+          cells += `<td class="border px-2 py-1 ${align}${sticky}">${val}</td>`;
+        }
+        cells += `<td class="border px-2 py-1 text-right">
+          <button class="text-sm text-white bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded"
+                  onclick="selectRecord(${JSON.stringify({})}.constructor(${JSON.stringify(r).replace(/"/g, '&quot;')}) , '${type}')">選択</button>
+        </td>`;
+        tr.innerHTML = cells;
+        tr.onclick = (e) => { if (e.target.tagName !== 'BUTTON') selectRecord(r, type); };
+        tbody.appendChild(tr);
+      }
+
+      enableSorting(tableId, columns, rows, type);
+      updateHeaderIndicators(tableId, type); // ← ヘッダに▲/▼と優先度を表示
+    }
+
+    function filterRows(tableId, keyword) {
+      const tbody = document.querySelector(`#${tableId} tbody`);
+      const q = keyword.trim().toLowerCase();
+      for (const tr of tbody.querySelectorAll('tr')) {
+        const text = tr.textContent.toLowerCase();
+        tr.style.display = text.includes(q) ? '' : 'none';
+      }
+    }
+
+    // テーブルヘッダクリックでソート
+    function enableSorting(tableId, columns, rows, type) {
+      const thead = document.querySelector('#' + tableId + ' thead');
+
+      // 比較ヘルパー
+      const compareValues = (va, vb) => {
+        const sva = (va ?? '').toString();
+        const svb = (vb ?? '').toString();
+        const na = Number(sva.replace(/,/g, ''));
+        const nb = Number(svb.replace(/,/g, ''));
+        const aIsNum = sva !== '' && !Number.isNaN(na);
+        const bIsNum = svb !== '' && !Number.isNaN(nb);
+        if (aIsNum && bIsNum) return na - nb;              // 数値比較
+        return sva.localeCompare(svb, 'ja');               // 文字列比較（日本語）
+      };
+      const compareByList = (a, b, list) => {
+        for (const { key, dir } of list) {
+          const diff = compareValues(a[key], b[key]);
+          if (diff !== 0) return diff * dir;
+        }
+        return 0;
+      };
+
+      // 重複バインド防止
+      if (thead.dataset.sortBound === '1') return;
+      thead.dataset.sortBound = '1';
+
+      thead.addEventListener('click', (ev) => {
+        const th = ev.target.closest('th[data-key]');
+        if (!th) return;
+        const key = th.getAttribute('data-key');
+
+        let list = SORT_STATE[type] || [];
+        const idx = list.findIndex((s) => s.key === key);
+
+        if (idx === -1) {
+          // 初回クリック: 昇順で末尾に追加（クリック順で優先度がつく）
+          list = list.concat({ key, dir: 1 });
+        } else if (list[idx].dir === 1) {
+          // 昇順 → 降順
+          list = list.map((s, i) => (i === idx ? { key: s.key, dir: -1 } : s));
+        } else {
+          // 降順 → 解除（リストから削除）
+          list = list.filter((_, i) => i !== idx);
+        }
+
+        SORT_STATE[type] = list;
+
+        const base = BASE_DATA[type] || rows;              // 元配列（開いた時点の順）
+        const sorted = list.length ? base.slice().sort((a, b) => compareByList(a, b, list)) : base.slice();
+
+        renderTable(tableId, sorted, type);
+      });
+    }
+
+    // ヘッダに「▲/▼」と並び順インデックスを表示
+    function updateHeaderIndicators(tableId, type) {
+      const thead = document.querySelector('#' + tableId + ' thead');
+      const list = SORT_STATE[type] || [];
+      const indexByKey = new Map(list.map(function (s, i) { return [s.key, { dir: s.dir, idx: i + 1 }]; }));
+      thead.querySelectorAll('th[data-key]').forEach(function (th) {
+        const key = th.getAttribute('data-key');
+        if (!th.dataset.label) th.dataset.label = th.textContent.replace(/[▲▼]\s*\d*$/g, '').trim();
+        const baseLabel = th.dataset.label;
+        const info = indexByKey.get(key);
+        if (info) {
+          const arrow = info.dir === 1 ? '▲' : '▼';
+          th.innerHTML = baseLabel + ' <span class="text-gray-400">' + arrow + '<sup>' + info.idx + '</sup></span>';
+        } else {
+          th.innerHTML = baseLabel;
+        }
+      });
+    }
+
+    // ---- 複合検索（ボタン式）ユーティリティ ----
+    function parseDate(s) {
+      if (!s) return null;
+      const d = new Date(s);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+
+    function sortRowsByState(rows, type) {
+      const list = SORT_STATE[type] || [];
+      if (!list.length) return rows.slice();
+      const compareValues = (va, vb) => {
+        const sva = (va ?? '').toString();
+        const svb = (vb ?? '').toString();
+        const na = Number(sva.replace(/,/g, ''));
+        const nb = Number(svb.replace(/,/g, ''));
+        const aIsNum = sva !== '' && !Number.isNaN(na);
+        const bIsNum = svb !== '' && !Number.isNaN(nb);
+        if (aIsNum && bIsNum) return na - nb;
+        return sva.localeCompare(svb, 'ja');
+      };
+      const compareByList = (a, b, list2) => {
+        for (const { key, dir } of list2) {
+          const diff = compareValues(a[key], b[key]);
+          if (diff !== 0) return diff * dir;
+        }
+        return 0;
+      };
+      return rows.slice().sort((a, b) => compareByList(a, b, list));
+    }
+
+    // 出荷：出荷日From-Toのみ
+    function applyShipmentFilter() {
+      const from = document.getElementById('shipFrom').value;
+      const to = document.getElementById('shipTo').value;
+      const fromD = parseDate(from);
+      const toD = parseDate(to);
+      const base = BASE_DATA.shipment || [];
+      const filtered = base.filter((r) => {
+        const d = parseDate(r.shipDate);
+        if (fromD && (!d || d < fromD)) return false;
+        if (toD && (!d || d > toD)) return false;
+        return true;
+      });
+      const sorted = sortRowsByState(filtered, 'shipment');
+      renderTable('shipmentTable', sorted, 'shipment');
+    }
+    function resetShipmentFilter() {
+      document.getElementById('shipFrom').value = '';
+      document.getElementById('shipTo').value = '';
+      const base = BASE_DATA.shipment || [];
+      const sorted = sortRowsByState(base, 'shipment');
+      renderTable('shipmentTable', sorted, 'shipment');
+    }
+
+    // 入庫：入庫日From-To + 仕入先名/運送会社名/原料名
+    function applyInboundFilter() {
+      const from = document.getElementById('inboundFrom').value;
+      const to = document.getElementById('inboundTo').value;
+      const sName = (document.getElementById('fSupplierName').value || '').trim().toLowerCase();
+      const cName = (document.getElementById('fCarrierName').value || '').trim().toLowerCase();
+      const mName = (document.getElementById('fMaterialName').value || '').trim().toLowerCase();
+
+      const fromD = parseDate(from);
+      const toD = parseDate(to);
+      const base = BASE_DATA.inbound || [];
+      const filtered = base.filter((r) => {
+        const d = parseDate(r.inboundDate);
+        if (fromD && (!d || d < fromD)) return false;
+        if (toD && (!d || d > toD)) return false;
+        if (sName && !(r.supplierName || '').toLowerCase().includes(sName)) return false;
+        if (cName && !(r.carrierName || '').toLowerCase().includes(cName)) return false;
+        if (mName && !(r.materialName || '').toLowerCase().includes(mName)) return false;
+        return true;
+      });
+      const sorted = sortRowsByState(filtered, 'inbound');
+      renderTable('inboundTable', sorted, 'inbound');
+    }
+
+    function resetInboundFilter() {
+      document.getElementById('inboundFrom').value = '';
+      document.getElementById('inboundTo').value = '';
+      document.getElementById('fSupplierName').value = '';
+      document.getElementById('fCarrierName').value = '';
+      document.getElementById('fMaterialName').value = '';
+      const base = BASE_DATA.inbound || [];
+      const sorted = sortRowsByState(base, 'inbound');
+      renderTable('inboundTable', sorted, 'inbound');
+    }
+
+    function selectRecord(rec, type) {
+      if (type === 'shipment') {
+        document.getElementById('shipmentNo').value = rec.no;
+        closeModal('shipmentModal');
+      } else {
+        // 入庫No.が無いケースを想定→モック用一時IDを生成（実装時はサーバ側採番と差し替え）
+        const tmpId = rec.inboundNo && rec.inboundNo.trim() !== ''
+          ? rec.inboundNo
+          : `INB-${rec.inboundDate.replaceAll('-', '')}-${rec.supplierCode}-${rec.cardNo}`;
+        document.getElementById('shipmentNo').value = tmpId;
+        closeModal('inboundModal');
+      }
+    }
+    // <-- 出荷・入庫No.選択　ここまで -->
 
     let codeReader;
     async function openBarcodeScanner() {
@@ -248,4 +654,5 @@
     }
   </script>
 </body>
+
 </html>
